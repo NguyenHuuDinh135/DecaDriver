@@ -127,3 +127,17 @@
     @apply bg-background text-foreground;
     }
 }
+
+@layer utilities {
+  .scrollbar-hide {
+    /* Ẩn thanh cuộn trên Firefox */
+    scrollbar-width: none;
+    /* Ẩn thanh cuộn trên IE và Edge */
+    -ms-overflow-style: none;
+  }
+  
+  /* Ẩn thanh cuộn trên Chrome, Safari và Opera */
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}

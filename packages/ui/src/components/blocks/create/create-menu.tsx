@@ -1,0 +1,66 @@
+"use client";
+
+import { Link2, ImagePlus, X, Video } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+
+export function CreateMenu() {
+  const router = useRouter();
+
+  return (
+    <div className="flex flex-col h-[100dvh] bg-zinc-950 text-white px-6 py-8">
+      {/* Nút Đóng */}
+      <div className="flex justify-end">
+        <button 
+          onClick={() => router.back()} 
+          className="p-2 bg-white/10 rounded-full hover:bg-white/20 transition"
+        >
+          <X size={24} />
+        </button>
+      </div>
+
+      <div className="flex-1 flex flex-col justify-center max-w-sm mx-auto w-full gap-6">
+        <h2 className="text-3xl font-bold text-center mb-8">Bạn muốn thêm gì?</h2>
+
+        {/* Nút 1: Đăng Look/Video */}
+        <Link 
+          href="/create/post"
+          className="group flex items-center p-4 bg-white/5 rounded-2xl border border-white/10 hover:bg-white/10 hover:border-primary transition-all"
+        >
+          <div className="w-14 h-14 bg-primary/20 text-primary rounded-xl flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
+            <Video size={28} />
+          </div>
+          <div className="flex-1">
+            <h3 className="font-bold text-lg">Đăng Look mới</h3>
+            <p className="text-sm text-white/60">Chia sẻ video phối đồ của bạn</p>
+          </div>
+        </Link>
+
+        {/* Nút 2: Thêm sản phẩm từ Link */}
+        <Link 
+          href="/create/link"
+          className="group flex items-center p-4 bg-white/5 rounded-2xl border border-white/10 hover:bg-white/10 hover:border-blue-500 transition-all"
+        >
+          <div className="w-14 h-14 bg-blue-500/20 text-blue-400 rounded-xl flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
+            <Link2 size={28} />
+          </div>
+          <div className="flex-1">
+            <h3 className="font-bold text-lg">Thêm từ Web</h3>
+            <p className="text-sm text-white/60">Dán link từ Shopee, Zara...</p>
+          </div>
+        </Link>
+
+        {/* Nút 3: Upload ảnh tủ đồ (Dự phòng) */}
+        <button className="group flex items-center p-4 bg-white/5 rounded-2xl border border-white/10 hover:bg-white/10 hover:border-green-500 transition-all opacity-50 cursor-not-allowed">
+          <div className="w-14 h-14 bg-green-500/20 text-green-400 rounded-xl flex items-center justify-center mr-4">
+            <ImagePlus size={28} />
+          </div>
+          <div className="flex-1 text-left">
+            <h3 className="font-bold text-lg">Quét tủ đồ</h3>
+            <p className="text-sm text-white/60">Sắp ra mắt</p>
+          </div>
+        </button>
+      </div>
+    </div>
+  );
+}

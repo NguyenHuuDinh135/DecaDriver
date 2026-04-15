@@ -2,6 +2,14 @@
   "extends": "@workspace/typescript-config/react-library.json",
   "compilerOptions": {
     "baseUrl": ".",
+    /* Thiết lập module chuẩn ES mới nhất */
+    "module": "ESNext", 
+    /* Giữ nguyên bundler như bạn muốn */
+    "moduleResolution": "bundler",
+    /* Cho phép import các file .ts mà không cần đuôi */
+    "allowImportingTsExtensions": true,
+    /* Không xuất ra file .js (vì thường bundle bằng công cụ khác) */
+    "noEmit": true,
     "paths": {
       "@workspace/ui/*": ["./src/*"]
     }

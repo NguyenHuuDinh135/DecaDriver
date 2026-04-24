@@ -8,6 +8,12 @@ import {
 } from "@workspace/ui/components/avatar"
 import { Separator } from "@workspace/ui/components/separator"
 
+export const dynamicParams = false;
+
+export function generateStaticParams() {
+  return [{ userId: "placeholder" }];
+}
+
 const MOCK_USERS: Record<
   string,
   {

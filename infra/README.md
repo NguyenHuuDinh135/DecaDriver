@@ -1,6 +1,6 @@
 # Infrastructure
 
-## Setup
+## Setup 
 
 1. Tạo S3 bucket + DynamoDB table cho remote state:
 ```bash

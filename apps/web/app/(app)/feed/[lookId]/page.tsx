@@ -1,5 +1,11 @@
 import { LookDetail } from "@workspace/ui/components/blocks/feed/look-detail";
 
+export const dynamicParams = false;
+
+export function generateStaticParams() {
+  return [{ lookId: "placeholder" }];
+}
+
 // Định nghĩa kiểu dữ liệu cho params trong Next.js 15
 interface PageProps {
   params: Promise<{ lookId: string }>;

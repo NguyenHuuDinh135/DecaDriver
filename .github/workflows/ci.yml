@@ -1,17 +1,13 @@
-name: Deploy Web
+name: CI
 
 on:
-  push:
+  pull_request:
     branches: [main]
-    paths:
-      - "apps/web/**"
-      - "packages/**"
 
 jobs:
-  deploy:
+  check:
     runs-on: ubuntu-latest
     permissions:
-      id-token: write
       contents: read
 
     steps:
@@ -29,12 +25,6 @@ jobs:
 
       - run: bun install --frozen-lockfile
 
+      - run: bun run lint
+      - run: bun run typecheck
       - run: bun run build --filter=web
-
-      - uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-          aws-region: ap-southeast-1
-
-      - name: Sync to S3
-        run: aws s3 sync apps/web/out s3://${{ secrets.S3_BUCKET }} --delete

@@ -41,7 +41,8 @@
     "@workspace/typescript-config": "workspace:*",
     "eslint": "^9.39.2",
     "tailwindcss": "^4.1.18",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "next": "^15.0.0"
   },
   "exports": {
     "./globals.css": "./src/styles/globals.css",
@@ -49,5 +50,10 @@
     "./lib/*": "./src/lib/*.ts",
     "./components/*": "./src/components/*.tsx",
     "./hooks/*": "./src/hooks/*.ts"
+  },
+  "peerDependencies": {
+    "next": "^15.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
   }
 }

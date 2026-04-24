@@ -1,1 +1,4 @@
-// ĐỢi khi có api rồi mưới làm
+// TODO: implement when API is ready
+export default function CreateLinkPage() {
+  return null;
+}

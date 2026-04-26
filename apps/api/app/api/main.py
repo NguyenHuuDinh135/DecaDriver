@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.api.routes import avatar, health, items, login, private, recommend, stylist, tryon, users, utils
+from app.api.routes import avatar, demo, health, items, login, private, recommend, stylist, tryon, users, utils
 from app.core.config import settings
 
 api_router = APIRouter()
@@ -13,6 +13,7 @@ api_router.include_router(avatar.router)
 api_router.include_router(stylist.router)
 api_router.include_router(recommend.router)
 api_router.include_router(health.router)
+api_router.include_router(demo.router)
 
 if settings.ENVIRONMENT == "local":
     api_router.include_router(private.router)

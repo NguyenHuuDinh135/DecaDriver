@@ -25,4 +25,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
     uv sync --frozen --no-dev
 
-CMD ["fastapi", "run", "--workers", "4", "app/main.py"]
+COPY ./scripts/prestart.sh /app/prestart.sh
+RUN chmod +x /app/prestart.sh
+
+CMD ["/bin/bash", "-c", "/app/prestart.sh && fastapi run --workers 4 app/main.py"]

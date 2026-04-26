@@ -37,6 +37,17 @@ jobs:
       - run: uv sync
         working-directory: apps/api
 
+      - run: uv run bash scripts/prestart.sh
+        working-directory: apps/api
+        env:
+          PROJECT_NAME: "Test API"
+          POSTGRES_SERVER: "localhost"
+          POSTGRES_USER: "postgres"
+          POSTGRES_PASSWORD: "testpassword"
+          POSTGRES_DB: "app"
+          FIRST_SUPERUSER: "admin@example.com"
+          FIRST_SUPERUSER_PASSWORD: "testpassword"
+
       - run: uv run pytest tests/ -x -q
         working-directory: apps/api
         env:

@@ -49,11 +49,12 @@ def test_use_access_token(
 def test_recovery_password(
     client: TestClient, normal_user_token_headers: dict[str, str]
 ) -> None:
-    with (
-        patch("app.core.config.settings.SMTP_HOST", "smtp.example.com"),
-        patch("app.core.config.settings.SMTP_USER", "admin@example.com"),
-    ):
-        email = "test@example.com"
+        with (
+            patch("app.core.config.settings.SMTP_HOST", "smtp.example.com"),
+            patch("app.core.config.settings.SMTP_USER", "admin@example.com"),
+            patch("app.core.config.settings.EMAILS_FROM_EMAIL", "info@example.com"),
+        ):
+            email = "test@example.com"
         r = client.post(
             f"{settings.API_V1_STR}/password-recovery/{email}",
             headers=normal_user_token_headers,

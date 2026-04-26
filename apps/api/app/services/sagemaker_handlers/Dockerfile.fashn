@@ -7,5 +7,5 @@ RUN pip install --no-cache-dir \
 
 COPY inference_fashn.py /opt/ml/code/inference.py
 
-ENV SAGEMAKER_PROGRAM inference.py
-ENV FASHN_WEIGHTS_DIR /opt/ml/model/weights
+ENV SAGEMAKER_PROGRAM=inference.py
+ENV FASHN_WEIGHTS_DIR=/opt/ml/model/weights

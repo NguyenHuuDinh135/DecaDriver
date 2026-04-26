@@ -93,6 +93,7 @@ jobs:
         working-directory: ${{ env.TF_WORKING_DIR }}
         run: |
           echo "ECR_REPOSITORY_URL=$(terraform output -raw ecr_repository_url)"
+          echo "ECR_FASHN_IMAGE_URI=$(terraform output -raw ecr_fashn_image_uri)"
           echo "ECS_CLUSTER_NAME=$(terraform output -raw ecs_cluster_name)"
           echo "ECS_SERVICE_NAME=$(terraform output -raw ecs_service_name)"
           echo "AI_S3_BUCKET=$(terraform output -raw ai_s3_bucket)"

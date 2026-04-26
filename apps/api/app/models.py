@@ -1,8 +1,10 @@
 import uuid
 from datetime import datetime, timezone
+from enum import Enum
+from typing import Any
 
 from pydantic import EmailStr
-from sqlalchemy import DateTime
+from sqlalchemy import DateTime, JSON
 from sqlmodel import Field, Relationship, SQLModel
 
 
@@ -127,3 +129,101 @@ class TokenPayload(SQLModel):
 class NewPassword(SQLModel):
     token: str
     new_password: str = Field(min_length=8, max_length=128)
+
+
+# ── AI Models ──────────────────────────────────────────────────────────────────
+
+class JobStatus(str, Enum):
+    pending = "pending"
+    processing = "processing"
+    completed = "completed"
+    failed = "failed"
+
+
+class Garment(SQLModel, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    title: str = Field(max_length=255)
+    brand: str | None = Field(default=None, max_length=255)
+    image_url: str
+    # clip_embedding stored as JSON array (pgvector handled via raw SQL in recommend route)
+    clip_embedding: list[float] | None = Field(default=None, sa_type=JSON)  # type: ignore[assignment]
+    created_at: datetime | None = Field(
+        default_factory=get_datetime_utc,
+        sa_type=DateTime(timezone=True),  # type: ignore
+    )
+    tryon_jobs: list["TryOnJob"] = Relationship(back_populates="garment")
+
+
+class GarmentPublic(SQLModel):
+    id: uuid.UUID
+    title: str
+    brand: str | None
+    image_url: str
+    created_at: datetime | None
+
+
+class TryOnJob(SQLModel, table=True):
+    __tablename__ = "tryon_job"  # type: ignore[assignment]
+
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    user_id: uuid.UUID = Field(foreign_key="user.id", nullable=False, ondelete="CASCADE")
+    garment_id: uuid.UUID = Field(foreign_key="garment.id", nullable=False, ondelete="CASCADE")
+    status: JobStatus = Field(default=JobStatus.pending)
+    result_url: str | None = Field(default=None)
+    sagemaker_output_s3: str | None = Field(default=None)
+    created_at: datetime | None = Field(
+        default_factory=get_datetime_utc,
+        sa_type=DateTime(timezone=True),  # type: ignore
+    )
+    garment: Garment | None = Relationship(back_populates="tryon_jobs")
+
+
+class TryOnJobPublic(SQLModel):
+    id: uuid.UUID
+    garment_id: uuid.UUID
+    status: JobStatus
+    result_url: str | None
+    created_at: datetime | None
+
+
+class StyleProfile(SQLModel, table=True):
+    __tablename__ = "style_profile"  # type: ignore[assignment]
+
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    user_id: uuid.UUID = Field(foreign_key="user.id", nullable=False, unique=True, ondelete="CASCADE")
+    body_type: str | None = Field(default=None, max_length=50)
+    color_tone: str | None = Field(default=None, max_length=50)
+    height_estimate: str | None = Field(default=None, max_length=50)
+    recommended_styles: Any | None = Field(default=None, sa_type=JSON)
+    created_at: datetime | None = Field(
+        default_factory=get_datetime_utc,
+        sa_type=DateTime(timezone=True),  # type: ignore
+    )
+
+
+class StyleProfilePublic(SQLModel):
+    body_type: str | None
+    color_tone: str | None
+    height_estimate: str | None
+    recommended_styles: Any | None
+
+
+class AvatarJob(SQLModel, table=True):
+    __tablename__ = "avatar_job"  # type: ignore[assignment]
+
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    user_id: uuid.UUID = Field(foreign_key="user.id", nullable=False, ondelete="CASCADE")
+    status: JobStatus = Field(default=JobStatus.pending)
+    lora_s3_key: str | None = Field(default=None)
+    sagemaker_job_name: str | None = Field(default=None)
+    created_at: datetime | None = Field(
+        default_factory=get_datetime_utc,
+        sa_type=DateTime(timezone=True),  # type: ignore
+    )
+
+
+class AvatarJobPublic(SQLModel):
+    id: uuid.UUID
+    status: JobStatus
+    lora_s3_key: str | None
+    created_at: datetime | None

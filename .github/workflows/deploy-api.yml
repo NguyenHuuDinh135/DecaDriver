@@ -91,7 +91,7 @@ jobs:
 
       - name: Build and push
         env:
-          ECR_URL: ${{ secrets.ECR_REPOSITORY_URL }}
+          ECR_URL: ${{ steps.ecr.outputs.registry }}/decadriver-api
           SHA: ${{ github.sha }}
         run: |
           docker build -t $ECR_URL:$SHA -t $ECR_URL:latest apps/api/
@@ -100,8 +100,8 @@ jobs:
 
       - name: Deploy to ECS
         env:
-          CLUSTER: ${{ secrets.ECS_CLUSTER_NAME }}
-          SERVICE: ${{ secrets.ECS_SERVICE_NAME }}
+          CLUSTER: decadriver
+          SERVICE: decadriver-api
         run: |
           aws ecs update-service \
             --cluster $CLUSTER \

@@ -38,6 +38,7 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Login to Amazon ECR
+        id: ecr
         uses: aws-actions/amazon-ecr-login@v2
 
       - name: Login to SageMaker ECR
@@ -47,7 +48,7 @@ jobs:
 
       - name: Build and push FASHN image
         env:
-          ECR_URL: ${{ secrets.ECR_FASHN_IMAGE_URI }}
+          ECR_URL: ${{ steps.ecr.outputs.registry }}/decadriver-fashn:latest
         run: |
           docker build -f "$HANDLERS_DIR/Dockerfile.fashn" -t "$ECR_URL" "$HANDLERS_DIR"
           docker push "$ECR_URL"
@@ -55,4 +56,4 @@ jobs:
       - name: Upload Qwen handler to S3
         run: |
           tar -czf /tmp/qwen.tar.gz -C $HANDLERS_DIR inference_qwen.py
-          aws s3 cp /tmp/qwen.tar.gz s3://${{ secrets.AI_S3_BUCKET }}/models/qwen/source.tar.gz
+          aws s3 cp /tmp/qwen.tar.gz s3://decadriver-ai-assets-864981728805/models/qwen/source.tar.gz

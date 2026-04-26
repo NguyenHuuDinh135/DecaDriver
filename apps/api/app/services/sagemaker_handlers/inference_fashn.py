@@ -1,55 +1,47 @@
-"""SageMaker inference handler for FASHN v1.5 virtual try-on."""
+"""SageMaker inference handler for FASHN v1.5."""
 import json
 import os
 import uuid
+import subprocess
 import boto3
 import requests
 from io import BytesIO
 from PIL import Image
 
-
-_s3 = None
+_s3 = boto3.client("s3")
 _pipeline = None
+WEIGHTS_DIR = os.environ.get("FASHN_WEIGHTS_DIR", "/opt/ml/model/weights")
 
 
 def model_fn(model_dir: str):
     global _pipeline
-    # Import here so container has fashn installed
-    from fashn import TryOnPipeline  # type: ignore[import]
-    _pipeline = TryOnPipeline.from_pretrained(model_dir)
-    _pipeline = _pipeline.to("cuda")
+    ai_bucket = os.environ["AI_S3_BUCKET"]
+
+    # Download weights from S3 if not present
+    if not os.path.exists(f"{WEIGHTS_DIR}/model.safetensors"):
+        os.makedirs(WEIGHTS_DIR, exist_ok=True)
+        _s3.download_file(ai_bucket, "models/fashn/weights.tar.gz", "/tmp/weights.tar.gz")
+        subprocess.run(["tar", "-xzf", "/tmp/weights.tar.gz", "-C", WEIGHTS_DIR], check=True)
+
+    from fashn_vton import TryOnPipeline  # type: ignore[import]
+    _pipeline = TryOnPipeline(weights_dir=WEIGHTS_DIR)
     return _pipeline
 
 
 def predict_fn(data: dict, pipeline):
-    global _s3
-    if _s3 is None:
-        _s3 = boto3.client("s3")
-
-    ai_bucket = os.environ["AI_S3_BUCKET"]
-
-    # Load images
     person_img = _load_image(data["person_image_url"])
     garment_img = _load_image(data["garment_image_url"])
 
-    # Load LoRA if available
-    lora_key = data.get("lora_s3_key")
-    if lora_key:
-        lora_path = f"/tmp/lora_{uuid.uuid4().hex}.safetensors"
-        bucket, key = lora_key.replace("s3://", "").split("/", 1) if lora_key.startswith("s3://") else (ai_bucket, lora_key)
-        _s3.download_file(bucket, key, lora_path)
-        pipeline.load_lora_weights(lora_path)
-
-    result_img = pipeline(
+    result = pipeline(
         person_image=person_img,
         garment_image=garment_img,
-        category=data.get("category", "upper_body"),
+        category=data.get("category", "tops"),
     )
 
-    # Upload result to S3
+    ai_bucket = os.environ["AI_S3_BUCKET"]
     result_key = f"results/fashn/{uuid.uuid4()}.png"
     buf = BytesIO()
-    result_img.save(buf, format="PNG")
+    result.images[0].save(buf, format="PNG")
     buf.seek(0)
     _s3.put_object(Bucket=ai_bucket, Key=result_key, Body=buf.read(), ContentType="image/png")
 
@@ -62,9 +54,8 @@ def output_fn(prediction: dict, accept: str) -> str:
 
 def _load_image(url: str) -> Image.Image:
     if url.startswith("s3://"):
-        s3 = boto3.client("s3")
         bucket, key = url[5:].split("/", 1)
-        obj = s3.get_object(Bucket=bucket, Key=key)
+        obj = _s3.get_object(Bucket=bucket, Key=key)
         return Image.open(BytesIO(obj["Body"].read())).convert("RGB")
     resp = requests.get(url, timeout=30)
     resp.raise_for_status()

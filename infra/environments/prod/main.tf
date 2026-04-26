@@ -3,7 +3,7 @@ provider "aws" {
 }
 
 resource "aws_s3_bucket" "web" {
-  bucket = var.bucket_name
+  bucket = "decadriver-web-prod"
 
   lifecycle {
     prevent_destroy = false

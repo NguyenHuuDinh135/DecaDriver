@@ -23,3 +23,8 @@ resource "aws_ecr_lifecycle_policy" "api" {
     }]
   })
 }
+
+resource "aws_ecr_repository" "fashn" {
+  name                 = "decadriver-fashn"
+  image_tag_mutability = "MUTABLE"
+}

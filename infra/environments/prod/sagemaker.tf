@@ -1,6 +1,5 @@
 locals {
-  hf_pytorch_inference = "763104351884.dkr.ecr.${var.aws_region}.amazonaws.com/huggingface-pytorch-inference:2.1.0-transformers4.37.0-gpu-py310-cu118-ubuntu20.04"
-  hf_tgi               = "763104351884.dkr.ecr.${var.aws_region}.amazonaws.com/huggingface-pytorch-tgi-inference:2.1.1-tgi1.3.4-gpu-py310-cu121-ubuntu22.04"
+  hf_pytorch_inference = "763104351884.dkr.ecr.${var.aws_region}.amazonaws.com/huggingface-pytorch-inference:2.6.0-transformers4.51.3-gpu-py312-cu124-ubuntu22.04"
 }
 
 # ── CLIP ViT-L/14 — Real-time Endpoint ────────────────────────────────────────
@@ -12,8 +11,8 @@ resource "aws_sagemaker_model" "clip" {
   primary_container {
     image = local.hf_pytorch_inference
     environment = {
-      HF_MODEL_ID                = "openai/clip-vit-large-patch14"
-      HF_TASK                    = "feature-extraction"
+      HF_MODEL_ID                   = "openai/clip-vit-large-patch14"
+      HF_TASK                       = "feature-extraction"
       SAGEMAKER_CONTAINER_LOG_LEVEL = "20"
     }
   }
@@ -35,30 +34,31 @@ resource "aws_sagemaker_endpoint" "clip" {
   endpoint_config_name = aws_sagemaker_endpoint_configuration.clip.name
 }
 
-# ── FASHN v1.5 — Async Endpoint ───────────────────────────────────────────────
+# ── FASHN v1.5 — Async Endpoint (custom ECR image) ────────────────────────────
+# Requires: deploy-ai.yml must push image to ECR first
+# Set var.create_ai_endpoints=true after CI/CD runs
 
 resource "aws_sagemaker_model" "fashn" {
+  count              = var.create_ai_endpoints ? 1 : 0
   name               = "decadriver-fashn-prod"
   execution_role_arn = aws_iam_role.sagemaker.arn
 
   primary_container {
-    image = local.hf_pytorch_inference
+    image = "${aws_ecr_repository.fashn.repository_url}:latest"
     environment = {
-      HF_MODEL_ID                   = "fashn/tryon"
-      HF_TASK                       = "image-to-image"
-      SAGEMAKER_CONTAINER_LOG_LEVEL = "20"
-      SAGEMAKER_PROGRAM             = "inference_fashn.py"
       AI_S3_BUCKET                  = aws_s3_bucket.ai_assets.bucket
+      SAGEMAKER_CONTAINER_LOG_LEVEL = "20"
     }
   }
 }
 
 resource "aws_sagemaker_endpoint_configuration" "fashn" {
-  name = "decadriver-fashn-prod"
+  count = var.create_ai_endpoints ? 1 : 0
+  name  = "decadriver-fashn-prod"
 
   production_variants {
     variant_name           = "default"
-    model_name             = aws_sagemaker_model.fashn.name
+    model_name             = aws_sagemaker_model.fashn[0].name
     instance_type          = "ml.g5.2xlarge"
     initial_instance_count = 1
   }
@@ -71,34 +71,37 @@ resource "aws_sagemaker_endpoint_configuration" "fashn" {
 }
 
 resource "aws_sagemaker_endpoint" "fashn" {
+  count                = var.create_ai_endpoints ? 1 : 0
   name                 = "decadriver-fashn-prod"
-  endpoint_config_name = aws_sagemaker_endpoint_configuration.fashn.name
+  endpoint_config_name = aws_sagemaker_endpoint_configuration.fashn[0].name
 }
 
 # ── Qwen2.5-VL-7B — Async Endpoint ────────────────────────────────────────────
+# Requires: deploy-ai.yml must upload qwen/source.tar.gz to S3 first
 
 resource "aws_sagemaker_model" "qwen" {
+  count              = var.create_ai_endpoints ? 1 : 0
   name               = "decadriver-qwen-prod"
   execution_role_arn = aws_iam_role.sagemaker.arn
 
   primary_container {
-    image = local.hf_tgi
+    image          = local.hf_pytorch_inference
+    model_data_url = "s3://${aws_s3_bucket.ai_assets.bucket}/models/qwen/source.tar.gz"
     environment = {
       HF_MODEL_ID                   = "Qwen/Qwen2.5-VL-7B-Instruct"
-      SM_NUM_GPUS                   = "1"
-      MAX_INPUT_LENGTH              = "4096"
-      MAX_TOTAL_TOKENS              = "8192"
       SAGEMAKER_CONTAINER_LOG_LEVEL = "20"
+      SAGEMAKER_PROGRAM             = "inference_qwen.py"
     }
   }
 }
 
 resource "aws_sagemaker_endpoint_configuration" "qwen" {
-  name = "decadriver-qwen-prod"
+  count = var.create_ai_endpoints ? 1 : 0
+  name  = "decadriver-qwen-prod"
 
   production_variants {
     variant_name           = "default"
-    model_name             = aws_sagemaker_model.qwen.name
+    model_name             = aws_sagemaker_model.qwen[0].name
     instance_type          = "ml.g5.2xlarge"
     initial_instance_count = 1
   }
@@ -111,11 +114,12 @@ resource "aws_sagemaker_endpoint_configuration" "qwen" {
 }
 
 resource "aws_sagemaker_endpoint" "qwen" {
+  count                = var.create_ai_endpoints ? 1 : 0
   name                 = "decadriver-qwen-prod"
-  endpoint_config_name = aws_sagemaker_endpoint_configuration.qwen.name
+  endpoint_config_name = aws_sagemaker_endpoint_configuration.qwen[0].name
 }
 
-# ── SSM — endpoint names for ECS to read ──────────────────────────────────────
+# ── SSM — endpoint names ───────────────────────────────────────────────────────
 
 resource "aws_ssm_parameter" "sagemaker_clip_endpoint" {
   name  = "/decadriver/prod/sagemaker_clip_endpoint"
@@ -124,13 +128,15 @@ resource "aws_ssm_parameter" "sagemaker_clip_endpoint" {
 }
 
 resource "aws_ssm_parameter" "sagemaker_fashn_endpoint" {
+  count = var.create_ai_endpoints ? 1 : 0
   name  = "/decadriver/prod/sagemaker_fashn_endpoint"
   type  = "String"
-  value = aws_sagemaker_endpoint.fashn.name
+  value = aws_sagemaker_endpoint.fashn[0].name
 }
 
 resource "aws_ssm_parameter" "sagemaker_qwen_endpoint" {
+  count = var.create_ai_endpoints ? 1 : 0
   name  = "/decadriver/prod/sagemaker_qwen_endpoint"
   type  = "String"
-  value = aws_sagemaker_endpoint.qwen.name
+  value = aws_sagemaker_endpoint.qwen[0].name
 }

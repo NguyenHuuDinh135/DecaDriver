@@ -25,23 +25,20 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Package and upload CLIP handler
-        run: |
-          tar -czf /tmp/clip.tar.gz -C $HANDLERS_DIR inference_clip.py
-          aws s3 cp /tmp/clip.tar.gz s3://${{ secrets.AI_S3_BUCKET }}/models/clip/source.tar.gz
+      - name: Login to ECR
+        uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Package and upload FASHN handler
+      - name: Build and push FASHN image
+        env:
+          ECR_URL: ${{ secrets.ECR_FASHN_IMAGE_URI }}
         run: |
-          tar -czf /tmp/fashn.tar.gz -C $HANDLERS_DIR inference_fashn.py
-          aws s3 cp /tmp/fashn.tar.gz s3://${{ secrets.AI_S3_BUCKET }}/models/fashn/source.tar.gz
+          docker build \
+            -f $HANDLERS_DIR/Dockerfile.fashn \
+            -t $ECR_URL \
+            $HANDLERS_DIR/
+          docker push $ECR_URL
 
-      - name: Package and upload Qwen handler
+      - name: Upload Qwen handler to S3
         run: |
           tar -czf /tmp/qwen.tar.gz -C $HANDLERS_DIR inference_qwen.py
           aws s3 cp /tmp/qwen.tar.gz s3://${{ secrets.AI_S3_BUCKET }}/models/qwen/source.tar.gz
-
-      - name: Summary
-        run: |
-          echo "✅ Uploaded inference handlers to s3://${{ secrets.AI_S3_BUCKET }}/models/"
-          echo "   clip/source.tar.gz, fashn/source.tar.gz, qwen/source.tar.gz"
-          echo "ℹ️  To apply: re-run terraform apply to update SageMaker model artifacts."

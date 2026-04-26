@@ -1,0 +1,11 @@
+FROM 763104351884.dkr.ecr.us-west-2.amazonaws.com/pytorch-inference:2.1.0-gpu-py310-cu118-ubuntu20.04
+
+RUN pip install --no-cache-dir \
+    "fashn-vton @ git+https://github.com/fashn-AI/fashn-vton-1.5.git" \
+    boto3>=1.34 \
+    requests>=2.31
+
+COPY inference_fashn.py /opt/ml/code/inference.py
+
+ENV SAGEMAKER_PROGRAM inference.py
+ENV FASHN_WEIGHTS_DIR /opt/ml/model/weights

@@ -3,13 +3,13 @@ variable "aws_region" {
   default = "us-west-2"
 }
 
-variable "bucket_name" {
-  type        = string
-  description = "S3 bucket name for web static assets"
+variable "first_superuser_email" {
+  type    = string
+  default = "admin@decadriver.com"
 }
 
-variable "first_superuser_email" {
-  type        = string
-  description = "Email for the first superuser account"
-  default     = "admin@decadriver.com"
+variable "create_ai_endpoints" {
+  type        = bool
+  description = "Set true after deploy-ai.yml has pushed FASHN image and uploaded Qwen handler to S3"
+  default     = false
 }

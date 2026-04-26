@@ -14,6 +14,10 @@ output "ecr_repository_url" {
   value = aws_ecr_repository.api.repository_url
 }
 
+output "ecr_fashn_image_uri" {
+  value = "${aws_ecr_repository.fashn.repository_url}:latest"
+}
+
 output "rds_endpoint" {
   value = aws_db_instance.main.address
 }
@@ -30,14 +34,14 @@ output "ai_s3_bucket" {
   value = aws_s3_bucket.ai_assets.bucket
 }
 
+output "sagemaker_clip_endpoint" {
+  value = aws_sagemaker_endpoint.clip.name
+}
+
 output "sagemaker_fashn_endpoint" {
-  value = aws_sagemaker_endpoint.fashn.name
+  value = length(aws_sagemaker_endpoint.fashn) > 0 ? aws_sagemaker_endpoint.fashn[0].name : "not_created"
 }
 
 output "sagemaker_qwen_endpoint" {
-  value = aws_sagemaker_endpoint.qwen.name
-}
-
-output "sagemaker_clip_endpoint" {
-  value = aws_sagemaker_endpoint.clip.name
+  value = length(aws_sagemaker_endpoint.qwen) > 0 ? aws_sagemaker_endpoint.qwen[0].name : "not_created"
 }

@@ -72,14 +72,14 @@ async def demo_tryon(
     )
 
     # Build input payload for the FASHN endpoint
+    # Field names must match inference_fashn.py: person_image_url, garment_image_url
     input_key = f"{prefix}/input.json"
     input_s3_uri = sagemaker_client.upload_json_to_s3(
         settings.AI_S3_BUCKET,
         input_key,
         {
-            "person_image_s3": person_s3,
-            "garment_image_s3": garment_s3,
-            "job_id": job_id,
+            "person_image_url": person_s3,
+            "garment_image_url": garment_s3,
         },
     )
 

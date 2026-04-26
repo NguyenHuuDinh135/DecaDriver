@@ -37,6 +37,14 @@ jobs:
       - run: uv sync
         working-directory: apps/api
 
+      - name: Build Email Templates
+        working-directory: apps/api/app/email-templates
+        run: |
+          mkdir -p build
+          for f in src/*.mjml; do
+            npx mjml "$f" -o "build/$(basename "$f" .mjml).html"
+          done
+
       - run: uv run bash scripts/prestart.sh
         working-directory: apps/api
         env:

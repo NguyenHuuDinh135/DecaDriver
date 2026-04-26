@@ -13,6 +13,20 @@ env:
 jobs:
   test:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: testpassword
+          POSTGRES_DB: app
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
     steps:
       - uses: actions/checkout@v4
 
@@ -29,6 +43,8 @@ jobs:
           PROJECT_NAME: "Test API"
           POSTGRES_SERVER: "localhost"
           POSTGRES_USER: "postgres"
+          POSTGRES_PASSWORD: "testpassword"
+          POSTGRES_DB: "app"
           FIRST_SUPERUSER: "admin@example.com"
           FIRST_SUPERUSER_PASSWORD: "testpassword"
 

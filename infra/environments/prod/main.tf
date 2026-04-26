@@ -4,6 +4,11 @@ provider "aws" {
 
 resource "aws_s3_bucket" "web" {
   bucket = var.bucket_name
+
+  lifecycle {
+    prevent_destroy = false
+    ignore_changes  = [bucket]
+  }
 }
 
 resource "aws_s3_bucket_website_configuration" "web" {

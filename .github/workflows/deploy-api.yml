@@ -66,6 +66,8 @@ jobs:
           POSTGRES_DB: "app"
           FIRST_SUPERUSER: "admin@example.com"
           FIRST_SUPERUSER_PASSWORD: "testpassword"
+          SMTP_HOST: "smtp.example.com"
+          EMAILS_FROM_EMAIL: "info@example.com"
 
   deploy:
     needs: test

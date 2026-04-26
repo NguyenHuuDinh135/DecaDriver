@@ -32,11 +32,8 @@ jobs:
         env:
           ECR_URL: ${{ secrets.ECR_FASHN_IMAGE_URI }}
         run: |
-          docker build \
-            -f $HANDLERS_DIR/Dockerfile.fashn \
-            -t $ECR_URL \
-            $HANDLERS_DIR/
-          docker push $ECR_URL
+          docker build -f "$HANDLERS_DIR/Dockerfile.fashn" -t "$ECR_URL" "$HANDLERS_DIR"
+          docker push "$ECR_URL"
 
       - name: Upload Qwen handler to S3
         run: |

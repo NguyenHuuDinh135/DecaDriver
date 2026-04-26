@@ -8,6 +8,11 @@ variable "first_superuser_email" {
   default = "admin@decadriver.com"
 }
 
+variable "bucket_name" {
+  type        = string
+  description = "Name of the S3 bucket for the web frontend"
+}
+
 variable "create_ai_endpoints" {
   type        = bool
   description = "Set true after deploy-ai.yml has pushed FASHN image and uploaded Qwen handler to S3"

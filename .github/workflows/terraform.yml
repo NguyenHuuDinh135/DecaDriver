@@ -1,13 +1,7 @@
 name: Terraform
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - "infra/**"
-  pull_request:
-    paths:
-      - "infra/**"
+  workflow_dispatch: # Manual trigger only — auto-run disabled
 
 env:
   TF_WORKING_DIR: infra/environments/prod

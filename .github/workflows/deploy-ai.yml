@@ -1,6 +1,7 @@
 name: Deploy AI Handlers
 
 on:
+  workflow_dispatch:
   push:
     branches: [main]
     paths:

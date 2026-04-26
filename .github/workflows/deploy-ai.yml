@@ -1,0 +1,47 @@
+name: Deploy AI Handlers
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/api/app/services/sagemaker_handlers/**"
+
+env:
+  AWS_REGION: us-west-2
+  HANDLERS_DIR: apps/api/app/services/sagemaker_handlers
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Package and upload CLIP handler
+        run: |
+          tar -czf /tmp/clip.tar.gz -C $HANDLERS_DIR inference_clip.py
+          aws s3 cp /tmp/clip.tar.gz s3://${{ secrets.AI_S3_BUCKET }}/models/clip/source.tar.gz
+
+      - name: Package and upload FASHN handler
+        run: |
+          tar -czf /tmp/fashn.tar.gz -C $HANDLERS_DIR inference_fashn.py
+          aws s3 cp /tmp/fashn.tar.gz s3://${{ secrets.AI_S3_BUCKET }}/models/fashn/source.tar.gz
+
+      - name: Package and upload Qwen handler
+        run: |
+          tar -czf /tmp/qwen.tar.gz -C $HANDLERS_DIR inference_qwen.py
+          aws s3 cp /tmp/qwen.tar.gz s3://${{ secrets.AI_S3_BUCKET }}/models/qwen/source.tar.gz
+
+      - name: Summary
+        run: |
+          echo "✅ Uploaded inference handlers to s3://${{ secrets.AI_S3_BUCKET }}/models/"
+          echo "   clip/source.tar.gz, fashn/source.tar.gz, qwen/source.tar.gz"
+          echo "ℹ️  To apply: re-run terraform apply to update SageMaker model artifacts."

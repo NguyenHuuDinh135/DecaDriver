@@ -4,5 +4,12 @@ variable "aws_region" {
 }
 
 variable "bucket_name" {
-  type = string
+  type        = string
+  description = "S3 bucket name for web static assets"
+}
+
+variable "first_superuser_email" {
+  type        = string
+  description = "Email for the first superuser account"
+  default     = "admin@decadriver.com"
 }

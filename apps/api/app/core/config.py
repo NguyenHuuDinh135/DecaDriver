@@ -94,6 +94,15 @@ class Settings(BaseSettings):
     FIRST_SUPERUSER: EmailStr
     FIRST_SUPERUSER_PASSWORD: str
 
+    # AWS / SageMaker
+    AWS_REGION: str = "us-west-2"
+    AI_S3_BUCKET: str = ""
+    SAGEMAKER_FASHN_ENDPOINT: str = ""
+    SAGEMAKER_QWEN_ENDPOINT: str = ""
+    SAGEMAKER_CLIP_ENDPOINT: str = ""
+    SAGEMAKER_ROLE_ARN: str = ""
+    DREAMBOOTH_IMAGE_URI: str = ""
+
     def _check_default_secret(self, var_name: str, value: str | None) -> None:
         if value == "changethis":
             message = (

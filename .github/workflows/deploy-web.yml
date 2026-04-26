@@ -39,7 +39,7 @@ jobs:
       - name: Get API URL from SSM
         id: api_url
         run: |
-          ALB=$(aws ssm get-parameter --name /decadriver/prod/alb_dns_name --query Parameter.Value --output text 2>/dev/null || echo "${{ secrets.API_URL }}")
+          ALB=$(aws ssm get-parameter --name /decadriver/prod/alb_dns_name --query Parameter.Value --output text 2>/dev/null || echo "decadriver-api-1569494241.us-west-2.elb.amazonaws.com")
           echo "url=http://$ALB" >> $GITHUB_OUTPUT
 
       - run: bun install --frozen-lockfile
@@ -49,4 +49,4 @@ jobs:
           NEXT_PUBLIC_API_URL: ${{ steps.api_url.outputs.url }}
 
       - name: Sync to S3
-        run: aws s3 sync apps/web/out s3://${{ secrets.S3_BUCKET }} --delete
+        run: aws s3 sync apps/web/out s3://decadriver-web-prod --delete

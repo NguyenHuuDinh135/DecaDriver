@@ -48,9 +48,9 @@ jobs:
         working-directory: ${{ env.TF_WORKING_DIR }}
         run: |
           terraform state show aws_s3_bucket.web 2>/dev/null || \
-            terraform import -var="bucket_name=${{ secrets.S3_BUCKET }}" aws_s3_bucket.web ${{ secrets.S3_BUCKET }} || true
+            terraform import -var="bucket_name=decadriver-web-prod" aws_s3_bucket.web decadriver-web-prod || true
 
-      - run: terraform plan -var="bucket_name=${{ secrets.S3_BUCKET }}" -no-color -out=tfplan
+      - run: terraform plan -var="bucket_name=decadriver-web-prod" -no-color -out=tfplan
         working-directory: ${{ env.TF_WORKING_DIR }}
 
       - uses: actions/upload-artifact@v4

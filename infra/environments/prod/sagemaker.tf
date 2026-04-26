@@ -1,6 +1,6 @@
 locals {
   hf_pytorch_inference = "763104351884.dkr.ecr.${var.aws_region}.amazonaws.com/huggingface-pytorch-inference:2.1.0-transformers4.37.0-gpu-py310-cu118-ubuntu20.04"
-  hf_tgi               = "763104351884.dkr.ecr.${var.aws_region}.amazonaws.com/huggingface-pytorch-tgi-inference:2.1.1-tgi1.4.0-gpu-py310-cu121-ubuntu22.04"
+  hf_tgi               = "763104351884.dkr.ecr.${var.aws_region}.amazonaws.com/huggingface-pytorch-tgi-inference:2.1.1-tgi1.3.4-gpu-py310-cu121-ubuntu22.04"
 }
 
 # ── CLIP ViT-L/14 — Real-time Endpoint ────────────────────────────────────────
@@ -42,12 +42,13 @@ resource "aws_sagemaker_model" "fashn" {
   execution_role_arn = aws_iam_role.sagemaker.arn
 
   primary_container {
-    image          = local.hf_pytorch_inference
-    model_data_url = "s3://${aws_s3_bucket.ai_assets.bucket}/models/fashn/source.tar.gz"
+    image = local.hf_pytorch_inference
     environment = {
       HF_MODEL_ID                   = "fashn/tryon"
+      HF_TASK                       = "image-to-image"
       SAGEMAKER_CONTAINER_LOG_LEVEL = "20"
       SAGEMAKER_PROGRAM             = "inference_fashn.py"
+      AI_S3_BUCKET                  = aws_s3_bucket.ai_assets.bucket
     }
   }
 }

@@ -86,6 +86,12 @@ jobs:
           name: tfplan
           path: ${{ env.TF_WORKING_DIR }}
 
+      - name: Import existing S3 web bucket if needed
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: |
+          terraform state show aws_s3_bucket.web 2>/dev/null || \
+            terraform import -var="bucket_name=${{ secrets.S3_BUCKET }}" aws_s3_bucket.web ${{ secrets.S3_BUCKET }} || true
+
       - run: terraform apply tfplan
         working-directory: ${{ env.TF_WORKING_DIR }}
 

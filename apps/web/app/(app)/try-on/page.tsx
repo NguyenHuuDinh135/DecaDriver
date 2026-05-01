@@ -21,17 +21,17 @@ export default function TryOnPage() {
   };
 
   return (
-    <div className="flex flex-col h-full relative bg-background">
+    <div className="flex h-full flex-col bg-secondary lg:flex-row">
       
-      {/* Nửa trên: Khu vực Camera (chiếm phần lớn màn hình) */}
-      <div className="flex-1 bg-zinc-900 rounded-b-3xl overflow-hidden shadow-lg z-10">
+      {/* Camera area — full height on mobile, left panel on desktop */}
+      <div className="relative z-10 flex-1 overflow-hidden rounded-b-3xl bg-zinc-950 shadow-lg lg:rounded-none lg:rounded-r-3xl">
         <CameraCapture onCapture={setUserImage} />
       </div>
 
-      {/* Nửa dưới: Khu vực chọn đồ & Nút Submit (chiếm khoảng 1/3) */}
-      <div className="h-64 p-4 flex flex-col justify-between bg-background z-0 -mt-4 pt-8">
+      {/* Garment picker + CTA — bottom panel on mobile, right panel on desktop */}
+      <div className="flex h-64 flex-col justify-between bg-secondary p-5 lg:h-auto lg:w-[360px] lg:justify-center lg:gap-8 lg:p-8">
         <div>
-          <h3 className="font-semibold text-sm text-muted-foreground mb-3">
+          <h3 className="mb-3 text-sm font-semibold text-muted-foreground">
             Chọn trang phục để thử
           </h3>
           <GarmentPicker onSelect={setSelectedGarment} />
@@ -41,7 +41,7 @@ export default function TryOnPage() {
           onClick={handleGenerate}
           disabled={!userImage || !selectedGarment}
           size="lg" 
-          className="w-full rounded-full mt-2 font-bold text-md shadow-md"
+          className="w-full rounded-full font-semibold shadow-sm"
         >
           {!userImage 
             ? "Vui lòng chụp ảnh" 

@@ -13,13 +13,6 @@ import {
 } from "lucide-react"
 import { Button } from "@workspace/ui/components/button"
 import { Badge } from "@workspace/ui/components/badge"
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-} from "@workspace/ui/components/card"
 import { Separator } from "@workspace/ui/components/separator"
 import { Progress } from "@workspace/ui/components/progress"
 
@@ -52,17 +45,15 @@ function MetricCard({
   value: string
 }) {
   return (
-    <Card size="sm">
-      <CardContent className="flex items-center gap-3">
-        <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-          <Icon className="size-4 text-primary" />
-        </div>
-        <div>
-          <p className="text-xs text-muted-foreground">{label}</p>
-          <p className="text-sm font-bold">{value}</p>
-        </div>
-      </CardContent>
-    </Card>
+    <div className="flex items-center gap-3 rounded-2xl bg-card p-3.5 ring-1 ring-foreground/[0.06]">
+      <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-muted/80">
+        <Icon className="size-[18px] text-foreground/70" />
+      </div>
+      <div>
+        <p className="text-xs text-muted-foreground">{label}</p>
+        <p className="text-sm font-bold">{value}</p>
+      </div>
+    </div>
   )
 }
 
@@ -90,37 +81,36 @@ export default function AffiliatePage() {
   )
 
   return (
-    <div className="mx-auto max-w-lg pb-8">
+    <div className="min-h-screen bg-secondary">
       {/* Header */}
-      <header className="flex items-center gap-3 px-4 pt-4">
+      <header className="sticky top-0 z-30 flex items-center gap-3 border-b border-border/30 bg-card/80 px-5 py-3 backdrop-blur-xl">
         <Button variant="ghost" size="icon-sm" asChild>
           <Link href="/profile">
             <ArrowLeft className="size-5" />
           </Link>
         </Button>
-        <h1 className="text-lg font-semibold">Affiliate</h1>
+        <h1 className="text-lg font-bold tracking-tight">Affiliate</h1>
         <Badge variant="secondary" className="ml-auto">
           {data.tier}
         </Badge>
       </header>
 
-      {/* Referral link */}
-      <section className="mt-5 px-4">
-        <Card>
-          <CardHeader>
-            <CardTitle>Your referral link</CardTitle>
-            <CardDescription>
+      <div className="mx-auto max-w-xl px-5 pb-8 pt-6">
+        {/* Referral link */}
+        <section>
+          <div className="rounded-2xl bg-card p-5 ring-1 ring-foreground/[0.06]">
+            <h3 className="text-sm font-semibold">Your referral link</h3>
+            <p className="mt-0.5 text-xs text-muted-foreground">
               Share this link to earn commission on every sale.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-2">
-              <code className="flex-1 truncate rounded-md bg-muted px-3 py-2 text-xs">
+            </p>
+            <div className="mt-3 flex items-center gap-2">
+              <code className="flex-1 truncate rounded-xl bg-muted/60 px-3 py-2.5 text-xs">
                 {data.referralLink}
               </code>
               <Button
                 variant="outline"
                 size="icon-sm"
+                className="rounded-xl"
                 onClick={handleCopy}
               >
                 {copied ? (
@@ -130,82 +120,78 @@ export default function AffiliatePage() {
                 )}
               </Button>
             </div>
-          </CardContent>
-        </Card>
-      </section>
+          </div>
+        </section>
 
-      {/* Tier progress */}
-      <section className="mt-4 px-4">
-        <div className="flex items-center justify-between text-xs text-muted-foreground">
-          <span>
-            {data.stats.conversions} / {data.nextTierAt} conversions to Gold
-          </span>
-          <span>{Math.round(progressPercent)}%</span>
-        </div>
-        <Progress value={progressPercent} className="mt-1" />
-      </section>
+        {/* Tier progress */}
+        <section className="mt-5">
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
+            <span>
+              {data.stats.conversions} / {data.nextTierAt} conversions to Gold
+            </span>
+            <span className="font-medium">{Math.round(progressPercent)}%</span>
+          </div>
+          <Progress value={progressPercent} className="mt-1.5" />
+        </section>
 
-      {/* Metrics grid */}
-      <section className="mt-5 grid grid-cols-2 gap-3 px-4">
-        <MetricCard
-          icon={MousePointerClick}
-          label="Total clicks"
-          value={data.stats.totalClicks.toLocaleString()}
-        />
-        <MetricCard
-          icon={ShoppingCart}
-          label="Conversions"
-          value={String(data.stats.conversions)}
-        />
-        <MetricCard
-          icon={TrendingUp}
-          label="CVR"
-          value={`${data.stats.conversionRate}%`}
-        />
-        <MetricCard
-          icon={DollarSign}
-          label="Pending"
-          value={formatVND(data.stats.pendingEarnings)}
-        />
-      </section>
+        {/* Metrics grid */}
+        <section className="mt-6 grid grid-cols-2 gap-3">
+          <MetricCard
+            icon={MousePointerClick}
+            label="Total clicks"
+            value={data.stats.totalClicks.toLocaleString()}
+          />
+          <MetricCard
+            icon={ShoppingCart}
+            label="Conversions"
+            value={String(data.stats.conversions)}
+          />
+          <MetricCard
+            icon={TrendingUp}
+            label="CVR"
+            value={`${data.stats.conversionRate}%`}
+          />
+          <MetricCard
+            icon={DollarSign}
+            label="Pending"
+            value={formatVND(data.stats.pendingEarnings)}
+          />
+        </section>
 
-      {/* Paid total */}
-      <section className="mt-4 px-4">
-        <Card>
-          <CardContent className="flex items-center justify-between">
+        {/* Paid total */}
+        <section className="mt-4">
+          <div className="flex items-center justify-between rounded-2xl bg-card p-4 ring-1 ring-foreground/[0.06]">
             <span className="text-sm text-muted-foreground">Total paid</span>
-            <span className="text-lg font-bold text-green-600 dark:text-green-400">
+            <span className="text-lg font-bold text-green-600">
               {formatVND(data.stats.paidEarnings)}
             </span>
-          </CardContent>
-        </Card>
-      </section>
+          </div>
+        </section>
 
-      <Separator className="mt-6" />
+        <Separator className="my-6" />
 
-      {/* Recent items */}
-      <section className="mt-4 px-4">
-        <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          Recent items
-        </h2>
-        <div className="space-y-2">
-          {data.recentItems.map((item) => (
-            <Card key={item.id} size="sm">
-              <CardContent className="flex items-center justify-between">
+        {/* Recent items */}
+        <section>
+          <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Recent items
+          </h2>
+          <div className="space-y-2">
+            {data.recentItems.map((item) => (
+              <div key={item.id} className="flex items-center justify-between rounded-2xl bg-card p-3.5 ring-1 ring-foreground/[0.06]">
                 <div>
                   <p className="text-sm font-medium">{item.product}</p>
                   <p className="text-xs text-muted-foreground">
                     {item.clicks} clicks · {item.date}
                   </p>
                 </div>
-                <span className="text-sm font-semibold text-green-600 dark:text-green-400">
+                <span className="text-sm font-semibold text-green-600">
                   +{formatVND(item.earned)}
                 </span>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </section>
+              </div>
+            ))}
+          </div>
+        </section>
+      </div>
     </div>
   )
 }

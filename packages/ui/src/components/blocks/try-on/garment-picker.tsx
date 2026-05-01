@@ -24,18 +24,20 @@ export function GarmentPicker({ onSelect }: GarmentPickerProps) {
   };
 
   return (
-    <div className="flex overflow-x-auto space-x-4 pb-4 scrollbar-hide">
+    <div className="flex gap-3 overflow-x-auto pb-3 scrollbar-hide">
       {MOCK_GARMENTS.map((item) => (
         <button
           key={item.id}
           onClick={() => handleSelect(item.id)}
           className={cn(
-            "relative flex-shrink-0 w-20 h-24 rounded-lg overflow-hidden border-2 transition-all",
-            selectedId === item.id ? "border-primary scale-105" : "border-transparent opacity-70"
+            "relative h-24 w-20 flex-shrink-0 overflow-hidden rounded-xl ring-2 transition-all",
+            selectedId === item.id
+              ? "scale-105 ring-foreground shadow-md"
+              : "ring-transparent opacity-70 hover:opacity-90 hover:ring-foreground/20"
           )}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+          <img src={item.image} alt={item.name} className="h-full w-full object-cover" />
         </button>
       ))}
     </div>

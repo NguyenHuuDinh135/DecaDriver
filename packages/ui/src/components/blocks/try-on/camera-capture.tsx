@@ -58,10 +58,10 @@ export function CameraCapture({ onCapture }: CameraCaptureProps) {
   };
 
   return (
-    <div className="relative h-full w-full bg-zinc-900 flex flex-col items-center justify-center overflow-hidden">
+    <div className="relative flex h-full w-full flex-col items-center justify-center overflow-hidden bg-zinc-950">
       {!capturedImg ? (
         <>
-          {/* Màn hình Video */}
+          {/* Video viewfinder */}
           <video 
             ref={videoRef} 
             autoPlay 
@@ -69,28 +69,28 @@ export function CameraCapture({ onCapture }: CameraCaptureProps) {
             className="h-full w-full object-cover"
           />
           
-          {/* Nút điều khiển Camera */}
-          <div className="absolute bottom-8 left-0 right-0 flex justify-center items-center space-x-6 z-10">
+          {/* Camera controls — Doji-polished */}
+          <div className="absolute bottom-8 left-0 right-0 z-10 flex items-center justify-center gap-6">
             {!stream ? (
-              <Button onClick={startCamera} size="lg" className="rounded-full px-8">
+              <Button onClick={startCamera} size="lg" className="rounded-full px-8 shadow-lg">
                 Bật Camera
               </Button>
             ) : (
               <button 
                 onClick={takePhoto}
-                className="w-16 h-16 bg-white rounded-full border-4 border-zinc-300 active:scale-95 transition-transform"
+                className="size-16 rounded-full border-[3px] border-white/80 bg-white transition-all hover:scale-105 active:scale-95 active:bg-white/80"
               />
             )}
           </div>
         </>
       ) : (
         <>
-          {/* Màn hình Preview ảnh đã chụp */}
+          {/* Preview */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={capturedImg} alt="Captured" className="h-full w-full object-cover" />
-          <div className="absolute bottom-8 left-0 right-0 flex justify-center z-10">
+          <div className="absolute bottom-8 left-0 right-0 z-10 flex justify-center">
             <Button variant="secondary" onClick={retake} className="rounded-full shadow-lg">
-              <RefreshCw className="mr-2 h-4 w-4" /> Chụp lại
+              <RefreshCw className="mr-2 size-4" /> Chụp lại
             </Button>
           </div>
         </>

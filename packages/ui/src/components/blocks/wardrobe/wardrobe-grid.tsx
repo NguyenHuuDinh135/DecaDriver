@@ -1,67 +1,95 @@
 "use client";
 
+import { Heart, Sparkles } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../tabs";
 import Link from "next/link";
-import { Button } from "../../button"; // Đừng quên import Button nhé!
-
-// Mock data tạm thời (sau này lấy từ lib/mock.ts)
-const MOCK_HISTORY = [
-  "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=400&auto=format&fit=crop",
-  "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?w=400&auto=format&fit=crop",
-  "https://images.unsplash.com/photo-1434389673869-e3814c8c10ac?w=400&auto=format&fit=crop",
-];
-
-const MOCK_SAVED = [
-  "https://images.unsplash.com/photo-1550639525-c97d455acf70?w=400&auto=format&fit=crop",
-  "https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=400&auto=format&fit=crop",
-];
+import { Button } from "../../button";
+import { MOCK_WARDROBE } from "../../../lib/mock";
 
 export function WardrobeGrid() {
+  const historyItems = MOCK_WARDROBE.filter((w) => w.type === "tryon");
+  const savedItems = MOCK_WARDROBE.filter((w) => w.type === "saved");
+
   return (
-    <div className="flex flex-col h-full w-full">
-      {/* Component Tabs của Shadcn */}
-      <Tabs defaultValue="history" className="w-full h-full flex flex-col">
+    <div className="flex h-full w-full flex-col bg-secondary">
+      <Tabs defaultValue="history" className="flex h-full w-full flex-col">
         
-        <div className="px-4 pt-4 pb-2 bg-background z-10 sticky top-0">
-          <TabsList className="grid w-full grid-cols-2 rounded-full bg-muted p-1">
-            <TabsTrigger value="history" className="rounded-full">Lịch sử Try-On</TabsTrigger>
-            <TabsTrigger value="saved" className="rounded-full">Sản phẩm đã lưu</TabsTrigger>
+        <div className="sticky top-0 z-10 bg-card/90 px-5 pb-2 pt-4 backdrop-blur-xl">
+          <TabsList className="grid w-full grid-cols-2 rounded-full bg-muted/50 p-1 ring-1 ring-foreground/[0.04]">
+            <TabsTrigger value="history" className="rounded-full text-xs font-medium">
+              Lịch sử Try-On
+            </TabsTrigger>
+            <TabsTrigger value="saved" className="rounded-full text-xs font-medium">
+              Sản phẩm đã lưu
+            </TabsTrigger>
           </TabsList>
         </div>
 
-        {/* Nội dung Tab Lịch sử */}
-        <TabsContent value="history" className="flex-1 overflow-y-auto px-4 pb-24 outline-none">
-          <div className="grid grid-cols-2 gap-3 mt-2">
-            {MOCK_HISTORY.map((img, idx) => (
-              <div key={idx} className="relative aspect-[3/4] rounded-xl overflow-hidden bg-zinc-100 dark:bg-zinc-800">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={img} alt="History" className="w-full h-full object-cover" />
-                <div className="absolute bottom-2 left-2 right-2 bg-black/40 backdrop-blur-md rounded px-2 py-1 text-[10px] text-white font-medium">
-                  24 Thg 4, 2026
+        {/* History tab */}
+        <TabsContent value="history" className="flex-1 overflow-y-auto px-5 pb-24 outline-none">
+          <div className="mt-3 grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-4">
+            {historyItems.map((item) => (
+              <div
+                key={item.id}
+                className="group relative overflow-hidden rounded-2xl bg-card ring-1 ring-foreground/[0.04] transition-all hover:shadow-md hover:ring-foreground/10"
+              >
+                <div className="aspect-[3/4] overflow-hidden">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={item.image}
+                    alt={item.garment}
+                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+                  />
+                </div>
+                {/* Info bar */}
+                <div className="p-3">
+                  <p className="text-xs font-semibold leading-snug line-clamp-1">{item.garment}</p>
+                  <p className="mt-0.5 text-[10px] text-muted-foreground">{item.date}</p>
+                </div>
+                {/* Hover action */}
+                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/50 to-transparent p-3 opacity-0 transition-opacity group-hover:opacity-100">
+                  <Button size="sm" className="h-7 w-full rounded-full text-[10px] font-semibold">
+                    <Sparkles className="mr-1 size-3" /> Thử lại
+                  </Button>
                 </div>
               </div>
             ))}
           </div>
 
-          {/* NÚT XEM CHI TIẾT ĐƯỢC THÊM VÀO ĐÂY */}
-          <div className="mt-6 mb-4 text-center">
+          <div className="mb-4 mt-6 text-center">
             <Link href="/wardrobe/history">
-              <Button variant="outline" className="rounded-full w-full font-bold border-2">
+              <Button variant="outline" className="w-full rounded-full font-medium">
                 Xem chi tiết toàn bộ lịch sử
               </Button>
             </Link>
           </div>
         </TabsContent>
 
-        {/* Nội dung Tab Đã lưu */}
-        <TabsContent value="saved" className="flex-1 overflow-y-auto px-4 pb-24 outline-none">
-          <div className="grid grid-cols-2 gap-3 mt-2">
-            {MOCK_SAVED.map((img, idx) => (
-              <div key={idx} className="relative aspect-square rounded-xl overflow-hidden bg-zinc-100 dark:bg-zinc-800">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={img} alt="Saved item" className="w-full h-full object-cover" />
-                <div className="absolute top-2 right-2 bg-white rounded-full p-1.5 shadow-sm">
+        {/* Saved tab */}
+        <TabsContent value="saved" className="flex-1 overflow-y-auto px-5 pb-24 outline-none">
+          <div className="mt-3 grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-4">
+            {savedItems.map((item) => (
+              <div
+                key={item.id}
+                className="group relative overflow-hidden rounded-2xl bg-card ring-1 ring-foreground/[0.04] transition-all hover:shadow-md hover:ring-foreground/10"
+              >
+                <div className="aspect-square overflow-hidden">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={item.image}
+                    alt={item.garment}
+                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+                  />
                 </div>
+                {/* Info */}
+                <div className="p-3">
+                  <p className="text-xs font-semibold leading-snug line-clamp-1">{item.garment}</p>
+                  <p className="mt-0.5 text-[10px] text-muted-foreground">{item.date}</p>
+                </div>
+                {/* Heart overlay */}
+                <button className="absolute right-2 top-2 flex size-8 items-center justify-center rounded-full bg-card/80 text-muted-foreground shadow-sm backdrop-blur-md transition-colors hover:text-rose-500">
+                  <Heart size={14} />
+                </button>
               </div>
             ))}
           </div>

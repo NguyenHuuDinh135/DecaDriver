@@ -15,11 +15,11 @@ export function TryOnResult() {
 
   if (status === "processing") {
     return (
-      <div className="flex flex-col items-center justify-center h-full space-y-6 p-8 text-center">
-        <div className="relative w-48 h-48">
-          {/* Hiệu ứng radar/scan AI */}
-          <div className="absolute inset-0 border-4 border-primary/20 rounded-full animate-ping" />
-          <div className="absolute inset-0 border-4 border-t-primary rounded-full animate-spin" />
+      <div className="flex h-full flex-col items-center justify-center gap-6 p-8 text-center">
+        <div className="relative size-40">
+          {/* Subtle Doji spinner */}
+          <div className="absolute inset-0 rounded-full border-[3px] border-foreground/10 animate-ping" />
+          <div className="absolute inset-0 rounded-full border-[3px] border-transparent border-t-foreground animate-spin" />
           <div className="absolute inset-0 flex items-center justify-center">
             <span className="text-4xl">✨</span>
           </div>
@@ -35,30 +35,32 @@ export function TryOnResult() {
   }
 
   return (
-    <div className="flex flex-col h-full animate-in fade-in zoom-in duration-500">
-      {/* Ảnh kết quả */}
-      <div className="relative flex-1 bg-zinc-100 dark:bg-zinc-900 rounded-3xl overflow-hidden shadow-inner">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img 
-          src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=1000&auto=format&fit=crop" 
-          alt="AI Result" 
-          className="w-full h-full object-cover"
-        />
-        <div className="absolute top-4 right-4 bg-black/50 backdrop-blur-md text-white text-[10px] px-2 py-1 rounded-full uppercase tracking-widest font-bold">
+    <div className="flex h-full flex-col bg-secondary animate-in fade-in zoom-in duration-500">
+      {/* Result image */}
+      <div className="relative mx-auto w-full max-w-md flex-1 overflow-hidden rounded-3xl bg-card p-2">
+        <div className="size-full overflow-hidden rounded-2xl">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img 
+            src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=1000&auto=format&fit=crop" 
+            alt="AI Result" 
+            className="size-full object-cover"
+          />
+        </div>
+        <div className="absolute right-4 top-4 rounded-full bg-foreground/80 px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-background backdrop-blur-md">
           AI Generated
         </div>
       </div>
 
-      {/* Hành động */}
-      <div className="p-6 grid grid-cols-2 gap-3">
-        <Button variant="outline" className="rounded-full w-full">
-          <Share2 className="mr-2 h-4 w-4" /> Chia sẻ
+      {/* Actions */}
+      <div className="mx-auto grid w-full max-w-md grid-cols-2 gap-3 p-6">
+        <Button variant="outline" className="rounded-full">
+          <Share2 className="mr-2 size-4" /> Chia sẻ
         </Button>
-        <Button className="rounded-full w-full">
-          <Check className="mr-2 h-4 w-4" /> Lưu tủ đồ
+        <Button className="rounded-full">
+          <Check className="mr-2 size-4" /> Lưu tủ đồ
         </Button>
         <Button variant="ghost" className="col-span-2 text-muted-foreground" onClick={() => window.history.back()}>
-          <RefreshCw className="mr-2 h-4 w-4" /> Thử lại với ảnh khác
+          <RefreshCw className="mr-2 size-4" /> Thử lại với ảnh khác
         </Button>
       </div>
     </div>

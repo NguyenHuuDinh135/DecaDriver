@@ -17,12 +17,6 @@ import {
 import { Button } from "@workspace/ui/components/button"
 import { Switch } from "@workspace/ui/components/switch"
 import { Separator } from "@workspace/ui/components/separator"
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardContent,
-} from "@workspace/ui/components/card"
 
 interface SettingRowProps {
   icon: React.ReactNode
@@ -42,10 +36,12 @@ function SettingRow({
   destructive,
 }: SettingRowProps) {
   const content = (
-    <div className="flex items-center gap-3 px-4 py-3">
-      <span className={destructive ? "text-destructive" : "text-muted-foreground"}>
-        {icon}
-      </span>
+    <div className="flex items-center gap-3 px-4 py-3.5">
+      <div className={`flex size-9 shrink-0 items-center justify-center rounded-xl ${destructive ? "bg-destructive/10" : "bg-muted/80"}`}>
+        <span className={destructive ? "text-destructive" : "text-muted-foreground"}>
+          {icon}
+        </span>
+      </div>
       <div className="flex-1">
         <p className={`text-sm font-medium ${destructive ? "text-destructive" : ""}`}>
           {label}
@@ -60,7 +56,7 @@ function SettingRow({
 
   if (href) {
     return (
-      <Link href={href} className="block transition-colors hover:bg-muted/50">
+      <Link href={href} className="block transition-colors hover:bg-muted/40">
         {content}
       </Link>
     )
@@ -74,32 +70,32 @@ export default function SettingsPage() {
   const [privateAccount, setPrivateAccount] = useState(false)
 
   return (
-    <div className="mx-auto max-w-lg pb-8">
+    <div className="min-h-screen bg-secondary">
       {/* Header */}
-      <header className="flex items-center gap-3 px-4 pt-4">
+      <header className="sticky top-0 z-30 flex items-center gap-3 border-b border-border/30 bg-card/80 px-5 py-3 backdrop-blur-xl">
         <Button variant="ghost" size="icon-sm" asChild>
           <Link href="/profile">
             <ArrowLeft className="size-5" />
           </Link>
         </Button>
-        <h1 className="text-lg font-semibold">Settings</h1>
+        <h1 className="text-lg font-bold tracking-tight">Settings</h1>
       </header>
 
-      {/* Account */}
-      <section className="mt-6 px-4">
-        <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          Account
-        </h2>
-        <Card>
-          <CardContent className="p-0">
+      <div className="mx-auto max-w-xl px-5 pb-8 pt-6">
+        {/* Account */}
+        <section>
+          <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Account
+          </h2>
+          <div className="overflow-hidden rounded-2xl bg-card ring-1 ring-foreground/[0.06]">
             <SettingRow
-              icon={<UserCog className="size-5" />}
+              icon={<UserCog className="size-[18px]" />}
               label="Edit profile"
               description="Name, bio, avatar"
             />
             <Separator />
             <SettingRow
-              icon={<Lock className="size-5" />}
+              icon={<Lock className="size-[18px]" />}
               label="Private account"
               description="Only followers can see your looks"
               action={
@@ -110,19 +106,17 @@ export default function SettingsPage() {
                 />
               }
             />
-          </CardContent>
-        </Card>
-      </section>
+          </div>
+        </section>
 
-      {/* Preferences */}
-      <section className="mt-6 px-4">
-        <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          Preferences
-        </h2>
-        <Card>
-          <CardContent className="p-0">
+        {/* Preferences */}
+        <section className="mt-6">
+          <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Preferences
+          </h2>
+          <div className="overflow-hidden rounded-2xl bg-card ring-1 ring-foreground/[0.06]">
             <SettingRow
-              icon={<Bell className="size-5" />}
+              icon={<Bell className="size-[18px]" />}
               label="Push notifications"
               action={
                 <Switch
@@ -134,7 +128,7 @@ export default function SettingsPage() {
             />
             <Separator />
             <SettingRow
-              icon={<Moon className="size-5" />}
+              icon={<Moon className="size-[18px]" />}
               label="Dark mode"
               action={
                 <Switch
@@ -146,45 +140,43 @@ export default function SettingsPage() {
             />
             <Separator />
             <SettingRow
-              icon={<Globe className="size-5" />}
+              icon={<Globe className="size-[18px]" />}
               label="Language"
               description="Tiếng Việt"
             />
             <Separator />
             <SettingRow
-              icon={<Eye className="size-5" />}
+              icon={<Eye className="size-[18px]" />}
               label="Content preferences"
               description="Brands, styles, sizing"
             />
-          </CardContent>
-        </Card>
-      </section>
+          </div>
+        </section>
 
-      {/* Danger zone */}
-      <section className="mt-6 px-4">
-        <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          Danger zone
-        </h2>
-        <Card>
-          <CardContent className="p-0">
-            <button className="w-full cursor-pointer transition-colors hover:bg-muted/50">
+        {/* Danger zone */}
+        <section className="mt-6">
+          <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Danger zone
+          </h2>
+          <div className="overflow-hidden rounded-2xl bg-card ring-1 ring-foreground/[0.06]">
+            <button className="w-full cursor-pointer transition-colors hover:bg-muted/40">
               <SettingRow
-                icon={<LogOut className="size-5" />}
+                icon={<LogOut className="size-[18px]" />}
                 label="Log out"
               />
             </button>
             <Separator />
-            <button className="w-full cursor-pointer transition-colors hover:bg-muted/50">
+            <button className="w-full cursor-pointer transition-colors hover:bg-muted/40">
               <SettingRow
-                icon={<Trash2 className="size-5" />}
+                icon={<Trash2 className="size-[18px]" />}
                 label="Delete account"
                 description="Permanently delete all your data"
                 destructive
               />
             </button>
-          </CardContent>
-        </Card>
-      </section>
+          </div>
+        </section>
+      </div>
     </div>
   )
 }

@@ -11,8 +11,10 @@
     "typecheck": "turbo typecheck"
   },
   "devDependencies": {
+    "@babel/plugin-transform-react-jsx": "^7.28.6",
     "@workspace/eslint-config": "workspace:*",
     "@workspace/typescript-config": "workspace:*",
+    "babel-preset-expo": "^55.0.18",
     "prettier": "^3.8.1",
     "prettier-plugin-tailwindcss": "^0.7.2",
     "turbo": "^2.8.17",
@@ -25,5 +27,9 @@
   "workspaces": [
     "apps/*",
     "packages/*"
-  ]
+  ],
+  "dependencies": {
+    "nativewind": "^4.2.3",
+    "react-native-css-interop": "^0.2.3"
+  }
 }

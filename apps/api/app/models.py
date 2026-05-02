@@ -162,6 +162,21 @@ class GarmentPublic(SQLModel):
     created_at: datetime | None
 
 
+class GarmentCreate(SQLModel):
+    title: str = Field(min_length=1, max_length=255)
+    brand: str | None = Field(default=None, max_length=255)
+
+
+class GarmentUpdate(SQLModel):
+    title: str | None = Field(default=None, min_length=1, max_length=255)
+    brand: str | None = Field(default=None, max_length=255)
+
+
+class GarmentsPublic(SQLModel):
+    data: list[GarmentPublic]
+    count: int
+
+
 class TryOnJob(SQLModel, table=True):
     __tablename__ = "tryon_job"  # type: ignore[assignment]
 

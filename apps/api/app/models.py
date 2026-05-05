@@ -56,6 +56,9 @@ class User(UserBase, table=True):
         sa_type=DateTime(timezone=True),  # type: ignore
     )
     items: list["Item"] = Relationship(back_populates="owner", cascade_delete=True)
+    
+    # === SOCIAL RELATIONSHIP (BỔ SUNG) ===
+    posts: list["Post"] = Relationship(back_populates="user", cascade_delete=True)
 
 
 # Properties to return via API, id is always required
@@ -242,3 +245,67 @@ class AvatarJobPublic(SQLModel):
     status: JobStatus
     lora_s3_key: str | None
     created_at: datetime | None
+
+
+# ── SOCIAL MODELS ─────────────────────────────────────────────────────────────
+
+class PostBase(SQLModel):
+    content: str | None = Field(default=None, max_length=500)
+    image_url: str = Field(max_length=500)          # URL ảnh từ kết quả Try-on
+    garment_id: uuid.UUID | None = Field(default=None, foreign_key="garment.id")
+
+
+class Post(PostBase, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    user_id: uuid.UUID = Field(foreign_key="user.id", index=True)
+    created_at: datetime = Field(
+        default_factory=get_datetime_utc,
+        sa_type=DateTime(timezone=True)
+    )
+    
+    # Relationships
+    user: "User" = Relationship(back_populates="posts")
+    likes: list["Like"] = Relationship(back_populates="post", cascade_delete=True)
+
+
+class Like(SQLModel, table=True):
+    user_id: uuid.UUID = Field(foreign_key="user.id", primary_key=True)
+    post_id: uuid.UUID = Field(foreign_key="post.id", primary_key=True)
+    created_at: datetime = Field(
+        default_factory=get_datetime_utc,
+        sa_type=DateTime(timezone=True)
+    )
+    
+    # Relationships
+    post: "Post" = Relationship(back_populates="likes")
+
+
+# Public schemas cho API
+class PostPublic(PostBase):
+    id: uuid.UUID
+    user_id: uuid.UUID
+    created_at: datetime
+
+
+class PostsPublic(SQLModel):
+    data: list[PostPublic]
+    count: int
+
+
+class LikePublic(SQLModel):
+    user_id: uuid.UUID
+    post_id: uuid.UUID
+    created_at: datetime
+
+
+class AffiliateClick(SQLModel, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    post_id: uuid.UUID = Field(foreign_key="post.id", index=True)
+    referrer_id: uuid.UUID = Field(foreign_key="user.id") # Người tạo ra bài post
+    buyer_id: uuid.UUID | None = Field(default=None, foreign_key="user.id") # Người nhấn link
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class AffiliateDashboard(SQLModel):
+    total_clicks: int
+    conversion_rate: float
+    estimated_revenue: float

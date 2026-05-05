@@ -1,9 +1,12 @@
 import { LookDetail } from "@workspace/ui/components/blocks/feed/look-detail";
+import { MOCK_FEED } from "@workspace/ui/lib/mock";
 
 export const dynamicParams = false;
 
 export function generateStaticParams() {
-  return [{ lookId: "placeholder" }];
+  return MOCK_FEED.map((post) => ({
+    lookId: post.id,
+  }));
 }
 
 // Định nghĩa kiểu dữ liệu cho params trong Next.js 15

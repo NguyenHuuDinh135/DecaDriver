@@ -1,4 +1,7 @@
+"use client"
+
 import Link from "next/link"
+import { useState } from "react"
 import {
   Settings,
   Grid3X3,
@@ -6,54 +9,82 @@ import {
   BookmarkCheck,
   Share2,
   BadgePercent,
+  Calendar,
+  Sparkles,
 } from "lucide-react"
 import { Button } from "@workspace/ui/components/button"
 import {
   Avatar,
-  AvatarImage,
   AvatarFallback,
 } from "@workspace/ui/components/avatar"
 import { Badge } from "@workspace/ui/components/badge"
 import { Separator } from "@workspace/ui/components/separator"
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@workspace/ui/components/card"
 import {
   Tabs,
   TabsList,
   TabsTrigger,
   TabsContent,
 } from "@workspace/ui/components/tabs"
-
-const MOCK_USER = {
-  name: "Nguyễn Vinh",
-  username: "@nqvinh",
-  avatarUrl: "",
-  bio: "Fashion lover 🌸 | Try-on enthusiast",
-  stats: { looks: 42, followers: 1_280, following: 326 },
-}
-
-const MOCK_LOOKS = Array.from({ length: 6 }, (_, i) => ({
-  id: `look-${i + 1}`,
-  thumbnail: `https://picsum.photos/seed/look${i + 1}/400/500`,
-  likes: Math.floor(Math.random() * 500) + 50,
-}))
+import { Skeleton } from "@workspace/ui/components/skeleton"
+import { ShareModal } from "@workspace/ui/components/blocks/share-modal"
+import { useCurrentUser } from "@/lib/hooks/use-auth"
+import { useStyleProfile } from "@/lib/hooks/use-profile"
+import { useTryOnHistory } from "@/lib/hooks/use-wardrobe"
 
 function StatItem({ label, value }: { label: string; value: number }) {
-  const display = value >= 1000 ? `${(value / 1000).toFixed(1)}k` : String(value)
   return (
     <div className="flex flex-col items-center">
-      <span className="text-base font-bold">{display}</span>
+      <span className="text-base font-bold">{value}</span>
       <span className="text-xs text-muted-foreground">{label}</span>
     </div>
   )
 }
 
 export default function ProfilePage() {
-  const user = MOCK_USER
+  const { data: user, isLoading: userLoading } = useCurrentUser()
+  const { data: styleProfile } = useStyleProfile()
+  const { data: tryOns } = useTryOnHistory()
+  const [shareOpen, setShareOpen] = useState(false)
+
+  const completedCount = tryOns?.filter((j) => j.status === "completed").length ?? 0
+  const totalCount = tryOns?.length ?? 0
+  const memberSince = user?.created_at
+    ? new Date(user.created_at).toLocaleDateString("en-US", {
+        month: "short",
+        year: "numeric",
+      })
+    : null
+
+  if (userLoading) {
+    return (
+      <div className="mx-auto max-w-lg px-4 pt-8 space-y-4">
+        <Skeleton className="h-20 w-20 rounded-full" />
+        <Skeleton className="h-5 w-48" />
+        <Skeleton className="h-4 w-32" />
+        <Skeleton className="h-32 w-full rounded-xl" />
+      </div>
+    )
+  }
+
+  const initials = user?.full_name
+    ? user.full_name
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
+        .toUpperCase()
+        .slice(0, 2)
+    : "?"
 
   return (
     <div className="mx-auto max-w-lg pb-4">
-      {/* Header */}
       <header className="flex items-center justify-between px-4 pt-4">
-        <h1 className="text-lg font-semibold">Profile</h1>
+        <h1 className="font-serif text-lg font-semibold">Profile</h1>
         <div className="flex gap-1">
           <Button variant="ghost" size="icon" asChild>
             <Link href="/profile/affiliate">
@@ -68,44 +99,83 @@ export default function ProfilePage() {
         </div>
       </header>
 
-      {/* Avatar + Stats */}
       <section className="flex items-center gap-5 px-4 pt-5">
-        <Avatar className="size-20">
-          {user.avatarUrl ? (
-            <AvatarImage src={user.avatarUrl} alt={user.name} />
-          ) : null}
-          <AvatarFallback className="text-xl">
-            {user.name.charAt(0)}
+        <Avatar className="size-20 border">
+          <AvatarFallback className="text-xl font-serif">
+            {initials}
           </AvatarFallback>
         </Avatar>
 
         <div className="flex flex-1 justify-around">
-          <StatItem label="Looks" value={user.stats.looks} />
-          <StatItem label="Followers" value={user.stats.followers} />
-          <StatItem label="Following" value={user.stats.following} />
+          <StatItem label="Try-Ons" value={totalCount} />
+          <StatItem label="Completed" value={completedCount} />
         </div>
       </section>
 
-      {/* Bio */}
       <section className="px-4 pt-3">
-        <p className="text-sm font-semibold">{user.name}</p>
-        <p className="text-xs text-muted-foreground">{user.username}</p>
-        <p className="mt-1 text-sm">{user.bio}</p>
+        <p className="text-sm font-semibold">{user?.full_name ?? "User"}</p>
+        <p className="text-xs text-muted-foreground">{user?.email}</p>
+        {memberSince && (
+          <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
+            <Calendar className="size-3" />
+            Member since {memberSince}
+          </p>
+        )}
       </section>
 
-      {/* Actions */}
       <section className="flex gap-2 px-4 pt-4">
-        <Button variant="outline" className="flex-1" size="sm">
-          Edit profile
+        <Button variant="outline" className="flex-1" size="sm" asChild>
+          <Link href="/profile/settings">Edit Profile</Link>
         </Button>
-        <Button variant="outline" size="icon-sm">
+        <Button variant="outline" size="icon-sm" onClick={() => setShareOpen(true)}>
           <Share2 className="size-4" />
         </Button>
       </section>
 
+      {styleProfile && (
+        <>
+          <Separator className="mt-4" />
+          <section className="px-4 pt-4">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="flex items-center gap-2 text-sm font-serif">
+                  <Sparkles className="size-4" />
+                  Style Profile
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {styleProfile.body_type && (
+                  <div className="flex justify-between text-xs">
+                    <span className="text-muted-foreground">Body Type</span>
+                    <span className="font-medium">{styleProfile.body_type}</span>
+                  </div>
+                )}
+                {styleProfile.color_tone && (
+                  <div className="flex justify-between text-xs">
+                    <span className="text-muted-foreground">Color Tone</span>
+                    <span className="font-medium">{styleProfile.color_tone}</span>
+                  </div>
+                )}
+                {styleProfile.recommended_styles.length > 0 && (
+                  <div className="pt-1">
+                    <p className="text-xs text-muted-foreground mb-1">Recommended</p>
+                    <div className="flex flex-wrap gap-1">
+                      {styleProfile.recommended_styles.map((style) => (
+                        <Badge key={style} variant="secondary" className="text-[0.65rem]">
+                          {style}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </section>
+        </>
+      )}
+
       <Separator className="mt-4" />
 
-      {/* Content Tabs */}
       <Tabs defaultValue="looks" className="mt-2">
         <TabsList variant="line" className="w-full justify-around">
           <TabsTrigger value="looks">
@@ -120,25 +190,29 @@ export default function ProfilePage() {
         </TabsList>
 
         <TabsContent value="looks">
-          <div className="grid grid-cols-3 gap-0.5 pt-1">
-            {MOCK_LOOKS.map((look) => (
-              <Link
-                key={look.id}
-                href={`/feed/${look.id}`}
-                className="group relative aspect-[4/5] overflow-hidden bg-muted"
-              >
-                <img
-                  src={look.thumbnail}
-                  alt=""
-                  className="size-full object-cover transition-transform group-hover:scale-105"
-                />
-                <span className="absolute bottom-1 left-1 flex items-center gap-0.5 rounded bg-black/50 px-1.5 py-0.5 text-[0.6rem] text-white">
-                  <Heart className="size-3" />
-                  {look.likes}
-                </span>
-              </Link>
-            ))}
-          </div>
+          {completedCount === 0 ? (
+            <div className="flex min-h-40 items-center justify-center text-sm text-muted-foreground">
+              Your completed looks will appear here.
+            </div>
+          ) : (
+            <div className="grid grid-cols-3 gap-0.5 pt-1">
+              {tryOns
+                ?.filter((j) => j.status === "completed" && j.result_url)
+                .map((job) => (
+                  <Link
+                    key={job.id}
+                    href="/wardrobe/history"
+                    className="group relative aspect-[4/5] overflow-hidden bg-muted"
+                  >
+                    <img
+                      src={job.result_url!}
+                      alt=""
+                      className="size-full object-cover transition-transform group-hover:scale-105"
+                    />
+                  </Link>
+                ))}
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="liked">
@@ -153,6 +227,13 @@ export default function ProfilePage() {
           </div>
         </TabsContent>
       </Tabs>
+
+      <ShareModal
+        open={shareOpen}
+        onOpenChange={setShareOpen}
+        url={`https://decadriver.com/profile/${user?.id ?? ""}`}
+        title="Share Profile"
+      />
     </div>
   )
 }

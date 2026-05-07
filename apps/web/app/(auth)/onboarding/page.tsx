@@ -1,141 +1,95 @@
-"use client";
+"use client"
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState } from "react"
+import { StepWelcome } from "./steps/step-welcome"
+import { StepName } from "./steps/step-name"
+import { StepPreference, type Preference } from "./steps/step-preference"
+import { StepAvatar } from "./steps/step-avatar"
+import { StepComplete } from "./steps/step-complete"
 
-const MAX_IMAGES = 10;
-const MIN_IMAGES = 5;
+const TOTAL_STEPS = 5
+
+interface FormData {
+  fullName: string
+  preference: Preference | null
+  avatarStarted: boolean
+}
+
+function ProgressIndicator({ current, total }: { current: number; total: number }) {
+  return (
+    <div className="flex items-center justify-center gap-1.5 mb-6">
+      {Array.from({ length: total }).map((_, i) => (
+        <div
+          key={i}
+          className={`h-1 rounded-full transition-all duration-300 ${
+            i <= current ? "w-6 bg-stone-900" : "w-1.5 bg-stone-200"
+          }`}
+        />
+      ))}
+    </div>
+  )
+}
 
 export default function OnboardingPage() {
-  const router = useRouter();
-  const [imageCount, setImageCount] = useState(0);
+  const [currentStep, setCurrentStep] = useState(0)
+  const [formData, setFormData] = useState<FormData>({
+    fullName: "",
+    preference: null,
+    avatarStarted: false,
+  })
 
-  const handleAddImages = () => {
-    // Mock: add 1 image each click, cap at MAX
-    setImageCount((prev) => Math.min(prev + 1, MAX_IMAGES));
-  };
+  const goNext = () => setCurrentStep((s) => Math.min(s + 1, TOTAL_STEPS - 1))
+  const goBack = () => setCurrentStep((s) => Math.max(s - 1, 0))
 
-  const handleRemoveImage = (index: number) => {
-    setImageCount((prev) => Math.max(prev - 1, 0));
-  };
+  const handleNameComplete = (name: string) => {
+    setFormData((prev) => ({ ...prev, fullName: name }))
+    goNext()
+  }
 
-  const canContinue = imageCount >= MIN_IMAGES;
+  const handlePreferenceSelect = (pref: Preference) => {
+    setFormData((prev) => ({ ...prev, preference: pref }))
+  }
+
+  const handleAvatarComplete = (started: boolean) => {
+    setFormData((prev) => ({ ...prev, avatarStarted: started }))
+    goNext()
+  }
 
   return (
-    <div className="flex flex-col gap-8">
-      {/* Header */}
-      <div>
-        <p className="text-xs tracking-[0.3em] text-stone-400 uppercase mb-2">
-          Step 1 of 3
-        </p>
-        <h1 className="text-2xl font-semibold text-stone-900 tracking-tight">
-          Upload your photos
-        </h1>
-        <p className="mt-1.5 text-sm text-stone-500">
-          Add 5–10 photos of yourself so we can build your virtual avatar.
-        </p>
-      </div>
+    <div className="flex flex-col">
+      <ProgressIndicator current={currentStep} total={TOTAL_STEPS} />
 
-      {/* Upload area */}
-      <div
-        onClick={handleAddImages}
-        className="relative border-2 border-dashed border-stone-200 rounded-2xl p-8 flex flex-col items-center gap-3 cursor-pointer hover:border-stone-400 hover:bg-stone-100 transition-all duration-200 active:scale-[0.99]"
-      >
-        <div className="w-12 h-12 rounded-full bg-stone-100 flex items-center justify-center">
-          <svg
-            className="w-6 h-6 text-stone-400"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={1.5}
-              d="M12 4v16m8-8H4"
-            />
-          </svg>
-        </div>
-        <div className="text-center">
-          <p className="text-sm font-medium text-stone-700">
-            Tap to add a photo
-          </p>
-          <p className="text-xs text-stone-400 mt-0.5">
-            PNG, JPG up to 10MB each
-          </p>
-        </div>
-      </div>
+      <div className="transition-opacity duration-200">
+        {currentStep === 0 && <StepWelcome onNext={goNext} />}
 
-      {/* Image count + grid preview */}
-      {imageCount > 0 && (
-        <div className="flex flex-col gap-3">
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-medium text-stone-600 uppercase tracking-wide">
-              Uploaded
-            </p>
-            <span
-              className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
-                canContinue
-                  ? "bg-emerald-100 text-emerald-700"
-                  : "bg-stone-100 text-stone-600"
-              }`}
-            >
-              {imageCount} / {MAX_IMAGES}
-            </span>
-          </div>
-
-          <div className="grid grid-cols-5 gap-2">
-            {Array.from({ length: imageCount }).map((_, i) => (
-              <div
-                key={i}
-                onClick={() => handleRemoveImage(i)}
-                className="aspect-square rounded-xl bg-stone-200 flex items-center justify-center cursor-pointer hover:bg-stone-300 relative group transition-colors"
-              >
-                <span className="text-xs text-stone-400 group-hover:hidden">
-                  {i + 1}
-                </span>
-                <svg
-                  className="w-4 h-4 text-stone-500 hidden group-hover:block"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Progress bar */}
-      <div className="flex flex-col gap-1.5">
-        <div className="h-1.5 w-full bg-stone-100 rounded-full overflow-hidden">
-          <div
-            className="h-full bg-stone-900 rounded-full transition-all duration-300"
-            style={{ width: `${(imageCount / MAX_IMAGES) * 100}%` }}
+        {currentStep === 1 && (
+          <StepName
+            defaultName={formData.fullName}
+            onNext={handleNameComplete}
+            onBack={goBack}
           />
-        </div>
-        {!canContinue && imageCount > 0 && (
-          <p className="text-xs text-stone-400 text-right">
-            {MIN_IMAGES - imageCount} more needed
-          </p>
+        )}
+
+        {currentStep === 2 && (
+          <StepPreference
+            selected={formData.preference}
+            onSelect={handlePreferenceSelect}
+            onNext={goNext}
+            onBack={goBack}
+          />
+        )}
+
+        {currentStep === 3 && (
+          <StepAvatar onNext={handleAvatarComplete} onBack={goBack} />
+        )}
+
+        {currentStep === 4 && (
+          <StepComplete
+            fullName={formData.fullName}
+            avatarStarted={formData.avatarStarted}
+          />
         )}
       </div>
-
-      {/* CTA */}
-      <button
-        onClick={() => router.push("/onboarding/avatar")}
-        disabled={!canContinue}
-        className="w-full py-3.5 rounded-xl bg-stone-900 text-white text-sm font-medium tracking-wide transition-all duration-150 hover:bg-stone-800 active:scale-[0.98] disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-stone-900"
-      >
-        Continue
-      </button>
     </div>
-  );
+  )
 }

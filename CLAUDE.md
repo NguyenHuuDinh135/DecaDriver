@@ -114,7 +114,7 @@ Uses Next.js App Router with route groups:
 
 ### Infrastructure
 
-AWS us-west-2, deployed via GitHub Actions:
+AWS us-east-1, deployed via GitHub Actions:
 - `deploy-web.yml` → S3 + CloudFront (static export)
 - `deploy-api.yml` → ECR + ECS Fargate
 - `deploy-ai.yml` → S3 model artifacts for SageMaker

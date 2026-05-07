@@ -95,7 +95,7 @@ class Settings(BaseSettings):
     FIRST_SUPERUSER_PASSWORD: str
 
     # AWS / SageMaker
-    AWS_REGION: str = "us-west-2"
+    AWS_REGION: str = "us-east-1"
     AI_S3_BUCKET: str = ""
     SAGEMAKER_FASHN_ENDPOINT: str = ""
     SAGEMAKER_QWEN_ENDPOINT: str = ""

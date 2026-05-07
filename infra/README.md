@@ -1,4 +1,4 @@
-# Infrastructure — DecaDriver (AWS us-west-2)
+# Infrastructure — DecaDriver (AWS us-east-1)
 
 ## Architecture
 
@@ -9,7 +9,7 @@ GitHub Actions CI/CD
   ├── deploy-api.yml     → ECR + ECS Fargate (FastAPI)
   └── deploy-ai.yml      → S3 model artifacts (SageMaker handlers)
 
-AWS us-west-2
+AWS us-east-1
   ├── VPC (10.0.0.0/16)
   │   ├── Public subnets  → ALB, NAT Gateway
   │   └── Private subnets → ECS Fargate, RDS PostgreSQL
@@ -39,13 +39,13 @@ AWS us-west-2
 ### 1. Create Terraform remote state backend
 
 ```bash
-aws s3 mb s3://decadriver-tfstate --region us-west-2
+aws s3 mb s3://decadriver-tfstate --region us-east-1
 aws dynamodb create-table \
   --table-name decadriver-tfstate-lock \
   --attribute-definitions AttributeName=LockID,AttributeType=S \
   --key-schema AttributeName=LockID,KeyType=HASH \
   --billing-mode PAY_PER_REQUEST \
-  --region us-west-2
+  --region us-east-1
 ```
 
 ### 2. Deploy infrastructure
@@ -117,7 +117,7 @@ curl http://$(terraform output -raw alb_dns_name)/api/v1/health
 Push changes to `apps/api/app/services/sagemaker_handlers/` → `deploy-ai.yml` auto-uploads to S3.
 To apply new handler to a running endpoint, re-run `terraform apply` to update the SageMaker model artifact.
 
-## Costs (estimate, us-west-2)
+## Costs (estimate, us-east-1)
 
 | Resource | Cost |
 |---|---|

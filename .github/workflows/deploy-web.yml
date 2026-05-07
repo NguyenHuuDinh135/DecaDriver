@@ -21,16 +21,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-
-      - uses: actions/cache@v4
-        with:
-          path: ~/.bun/install/cache
-          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
-          restore-keys: ${{ runner.os }}-bun-
-
       - uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
@@ -40,13 +30,37 @@ jobs:
         id: api_url
         run: |
           ALB=$(aws ssm get-parameter --name /decadriver/prod/alb_dns_name --region ${{ env.AWS_REGION }} --query Parameter.Value --output text 2>/dev/null || echo "pending-deploy")
-          echo "url=http://$ALB" >> $GITHUB_OUTPUT
+          echo "url=http://$ALB/api/v1" >> $GITHUB_OUTPUT
 
-      - run: bun install --frozen-lockfile
+      - name: Login to ECR
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
 
-      - run: bun run build --filter=web
+      - name: Build and push
         env:
+          ECR_URL: ${{ steps.ecr.outputs.registry }}/decadriver-web
+          SHA: ${{ github.sha }}
           NEXT_PUBLIC_API_URL: ${{ steps.api_url.outputs.url }}
+        run: |
+          docker build \
+            --build-arg NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL \
+            -t $ECR_URL:$SHA \
+            -t $ECR_URL:latest \
+            -f apps/web/Dockerfile .
+          docker push $ECR_URL:$SHA
+          docker push $ECR_URL:latest
 
-      - name: Sync to S3
-        run: aws s3 sync apps/web/out s3://decadriver-web-prod --delete
+      - name: Deploy to ECS
+        env:
+          CLUSTER: decadriver
+          SERVICE: decadriver-web
+        run: |
+          aws ecs update-service \
+            --cluster $CLUSTER \
+            --service $SERVICE \
+            --force-new-deployment \
+            --region ${{ env.AWS_REGION }}
+          aws ecs wait services-stable \
+            --cluster $CLUSTER \
+            --services $SERVICE \
+            --region ${{ env.AWS_REGION }}

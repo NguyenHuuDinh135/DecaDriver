@@ -1,4 +1,4 @@
-FROM 763104351884.dkr.ecr.us-west-2.amazonaws.com/pytorch-inference:2.1.0-gpu-py310
+FROM 763104351884.dkr.ecr.us-east-1.amazonaws.com/pytorch-inference:2.1.0-gpu-py310
 
 RUN pip install --no-cache-dir \
     "fashn-vton @ git+https://github.com/fashn-AI/fashn-vton-1.5.git" \

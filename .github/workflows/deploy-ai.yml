@@ -56,4 +56,4 @@ jobs:
       - name: Upload Qwen handler to S3
         run: |
           tar -czf /tmp/qwen.tar.gz -C $HANDLERS_DIR inference_qwen.py
-          aws s3 cp /tmp/qwen.tar.gz s3://decadriver-ai-assets-864981728805/models/qwen/source.tar.gz
+          aws s3 cp /tmp/qwen.tar.gz s3://decadriver-ai-assets-809131193138/models/qwen/source.tar.gz

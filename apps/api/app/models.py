@@ -4,7 +4,7 @@ from enum import Enum
 from typing import Any
 
 from pydantic import EmailStr
-from sqlalchemy import DateTime, JSON
+from sqlalchemy import JSON, DateTime
 from sqlmodel import Field, Relationship, SQLModel
 
 
@@ -210,6 +210,7 @@ class StyleProfile(SQLModel, table=True):
     color_tone: str | None = Field(default=None, max_length=50)
     height_estimate: str | None = Field(default=None, max_length=50)
     recommended_styles: Any | None = Field(default=None, sa_type=JSON)
+    avoid_styles: Any | None = Field(default=None, sa_type=JSON)
     created_at: datetime | None = Field(
         default_factory=get_datetime_utc,
         sa_type=DateTime(timezone=True),  # type: ignore
@@ -221,6 +222,7 @@ class StyleProfilePublic(SQLModel):
     color_tone: str | None
     height_estimate: str | None
     recommended_styles: Any | None
+    avoid_styles: Any | None
 
 
 class AvatarJob(SQLModel, table=True):
@@ -230,6 +232,7 @@ class AvatarJob(SQLModel, table=True):
     user_id: uuid.UUID = Field(foreign_key="user.id", nullable=False, ondelete="CASCADE")
     status: JobStatus = Field(default=JobStatus.pending)
     lora_s3_key: str | None = Field(default=None)
+    reference_image_url: str | None = Field(default=None)
     sagemaker_job_name: str | None = Field(default=None)
     created_at: datetime | None = Field(
         default_factory=get_datetime_utc,
@@ -241,4 +244,5 @@ class AvatarJobPublic(SQLModel):
     id: uuid.UUID
     status: JobStatus
     lora_s3_key: str | None
+    reference_image_url: str | None
     created_at: datetime | None

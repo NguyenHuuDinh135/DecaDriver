@@ -24,14 +24,17 @@ async def train_avatar(
 
     # Upload images to S3
     input_prefix = f"avatars/{current_user.id}/training/"
-    for img in images:
+    reference_image_url = None
+    for i, img in enumerate(images):
         data = await img.read()
-        sagemaker_client.upload_bytes_to_s3(
+        s3_uri = sagemaker_client.upload_bytes_to_s3(
             settings.AI_S3_BUCKET,
             f"{input_prefix}{img.filename}",
             data,
             img.content_type or "image/jpeg",
         )
+        if i == 0:
+            reference_image_url = s3_uri
 
     job_name = f"dreambooth-{current_user.id}-{uuid.uuid4().hex[:8]}"
     sagemaker_client.start_training_job(
@@ -46,6 +49,7 @@ async def train_avatar(
         user_id=current_user.id,
         status=JobStatus.pending,
         sagemaker_job_name=job_name,
+        reference_image_url=reference_image_url,
     )
     session.add(job)
     session.commit()
@@ -67,7 +71,7 @@ def get_avatar_status(*, session: SessionDep, current_user: CurrentUser) -> Any:
         sm_status = sagemaker_client.get_training_job_status(job.sagemaker_job_name)
         if sm_status == "Completed":
             job.status = JobStatus.completed
-            job.lora_s3_key = f"avatars/{current_user.id}/output/model.tar.gz"
+            job.lora_s3_key = f"avatars/{current_user.id}/lora.safetensors"
             session.add(job)
             session.commit()
             session.refresh(job)
@@ -91,7 +95,7 @@ def avatar_webhook(*, session: SessionDep, job_name: str, status: str) -> Any:
     job.status = JobStatus.completed if status == "Completed" else JobStatus.failed
     if job.status == JobStatus.completed:
         # Extract user_id from job to build lora path
-        job.lora_s3_key = f"avatars/{job.user_id}/output/model.tar.gz"
+        job.lora_s3_key = f"avatars/{job.user_id}/lora.safetensors"
     session.add(job)
     session.commit()
     return {"ok": True}

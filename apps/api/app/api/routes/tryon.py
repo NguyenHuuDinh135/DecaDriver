@@ -6,7 +6,7 @@ from sqlmodel import select
 
 from app.api.deps import CurrentUser, SessionDep
 from app.core.config import settings
-from app.models import Garment, JobStatus, TryOnJob, TryOnJobPublic
+from app.models import AvatarJob, Garment, JobStatus, TryOnJob, TryOnJobPublic
 from app.services.sagemaker_client import sagemaker_client
 
 router = APIRouter(prefix="/tryon", tags=["tryon"])
@@ -23,15 +23,28 @@ def create_tryon_job(
     if not garment:
         raise HTTPException(status_code=404, detail="Garment not found")
 
+    # Get user's reference image from avatar training
+    avatar_job = session.exec(
+        select(AvatarJob)
+        .where(AvatarJob.user_id == current_user.id)
+        .where(AvatarJob.status == JobStatus.completed)
+        .order_by(AvatarJob.created_at.desc())  # type: ignore[union-attr]
+    ).first()
+
+    if not avatar_job or not avatar_job.reference_image_url:
+        raise HTTPException(
+            status_code=400,
+            detail="Vui lòng tạo AI Avatar trước khi sử dụng tính năng thử đồ."
+        )
+
     # Build input payload and upload to S3
     input_key = f"inputs/tryon/{current_user.id}/{uuid.uuid4()}.json"
     input_s3_uri = sagemaker_client.upload_json_to_s3(
         settings.AI_S3_BUCKET,
         input_key,
         {
-            "user_id": str(current_user.id),
+            "person_image_url": avatar_job.reference_image_url,
             "garment_image_url": garment.image_url,
-            "lora_s3_key": f"avatars/{current_user.id}/lora.safetensors",
         },
     )
 

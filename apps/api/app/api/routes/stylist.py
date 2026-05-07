@@ -56,6 +56,7 @@ def analyze_style(
     profile.color_tone = result.get("colorTone")
     profile.height_estimate = result.get("heightEstimate")
     profile.recommended_styles = result.get("recommendedStyles")
+    profile.avoid_styles = result.get("avoidStyles")
     session.add(profile)
     session.commit()
     session.refresh(profile)

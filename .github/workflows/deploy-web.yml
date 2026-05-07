@@ -9,7 +9,7 @@ on:
       - "packages/**"
 
 env:
-  AWS_REGION: us-west-2
+  AWS_REGION: us-east-1
 
 jobs:
   deploy:
@@ -39,7 +39,7 @@ jobs:
       - name: Get API URL from SSM
         id: api_url
         run: |
-          ALB=$(aws ssm get-parameter --name /decadriver/prod/alb_dns_name --query Parameter.Value --output text 2>/dev/null || echo "decadriver-api-1569494241.us-west-2.elb.amazonaws.com")
+          ALB=$(aws ssm get-parameter --name /decadriver/prod/alb_dns_name --region ${{ env.AWS_REGION }} --query Parameter.Value --output text 2>/dev/null || echo "pending-deploy")
           echo "url=http://$ALB" >> $GITHUB_OUTPUT
 
       - run: bun install --frozen-lockfile

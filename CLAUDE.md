@@ -8,7 +8,7 @@ DecaDriver is a virtual try-on fashion platform. Users create AI avatars (DreamB
 
 ## Monorepo Structure
 
-- **apps/web** — Next.js 16 (App Router, Turbopack, React 19, Tailwind CSS v4)
+- **apps/web** — Next.js 15 (App Router, Turbopack, React 19, Tailwind CSS v4)
 - **apps/mobile** — Expo 55 / React Native 0.83 (NativeWind, expo-router)
 - **apps/api** — Python FastAPI (SQLModel, Alembic, SageMaker integration)
 - **packages/ui** — Shared shadcn/ui components (imported as `@workspace/ui`)
@@ -23,7 +23,7 @@ DecaDriver is a virtual try-on fashion platform. Users create AI avatars (DreamB
 ```bash
 bun install              # Install all workspace deps
 bun run dev              # Start all apps in dev mode
-bun run build            # Build all (web outputs to apps/web/out)
+bun run build            # Build all
 bun run lint             # Lint all workspaces
 bun run typecheck        # TypeScript check all workspaces
 bun run format           # Prettier format all
@@ -34,8 +34,7 @@ bun run format           # Prettier format all
 ```bash
 cd apps/api
 uv sync                  # Install Python deps
-bash ./scripts/test.sh   # Run tests with coverage
-docker compose watch     # Local dev with hot reload
+bash ./scripts/test.sh   # Run tests with coverage report
 
 # Single test
 uv run pytest tests/path_to_test.py -v
@@ -55,8 +54,13 @@ docker compose exec backend alembic upgrade head
 ```bash
 cd apps/web
 bun run dev              # Next.js dev with Turbopack
-bun run build            # Production build
+bun run build            # Production build (standalone output)
 bun run typecheck        # Type check
+
+# Testing
+bun run test             # Vitest unit tests (single run)
+bun run test:watch       # Vitest in watch mode
+bun run test:e2e         # Playwright E2E (starts dev server automatically)
 ```
 
 ### Mobile — apps/mobile
@@ -88,37 +92,45 @@ app/
 ├── api/
 │   ├── main.py          # Router registration (all routes under /api/v1)
 │   ├── deps.py          # DI: SessionDep, CurrentUser (JWT-based)
-│   └── routes/          # Route modules: tryon, avatar, stylist, recommend, health, demo...
+│   └── routes/          # Route modules: tryon, avatar, stylist, recommend, garments, health, demo...
 ├── core/
 │   ├── config.py        # Pydantic Settings (env-driven)
 │   ├── db.py            # SQLModel engine
-│   └── security.py      # JWT + password hashing
+│   └── security.py      # JWT + password hashing (argon2/bcrypt via pwdlib)
 └── services/
     ├── sagemaker_client.py          # Singleton: async/realtime endpoints, training jobs, S3 upload
     └── sagemaker_handlers/          # Deployed to SageMaker as inference code
-        ├── inference_fashn.py       # FASHN v1.5 try-on (person_image_url + garment_image_url)
+        ├── inference_fashn.py       # FASHN v1.5 try-on
         ├── inference_clip.py        # CLIP embeddings for garment similarity
         └── inference_qwen.py        # Qwen2.5-VL style analysis
 ```
 
 Key patterns:
 - Routes use `SessionDep` and `CurrentUser` type aliases from `deps.py`
-- AI inference is async via SageMaker: submit job → poll S3 for result
+- AI inference is async via SageMaker: submit job → poll for result
 - Models use SQLModel (SQLAlchemy + Pydantic unified): table models have `table=True`, response schemas are plain SQLModel classes
+- `private` routes only load when `ENVIRONMENT=local`
 
 ### Web (apps/web)
 
 Uses Next.js App Router with route groups:
-- `(auth)/` — Login, onboarding (fullscreen, no nav)
+- `(auth)/` — Login, register, onboarding (fullscreen, no nav)
 - `(app)/` — Main app with bottom nav: feed, try-on, create, wardrobe, profile
+
+Data flow:
+- **State**: Zustand for auth (persisted to localStorage), TanStack Query for server state
+- **API client**: `lib/api/client.ts` — thin fetch wrapper with auto-auth headers and 401 logout
+- **Hooks**: `lib/hooks/use-*.ts` — TanStack Query hooks per domain (tryon, wardrobe, avatar, stylist)
+- **Auth middleware**: `middleware.ts` — redirects unauthenticated users to `/login` for protected routes
+- **Tests**: Vitest + Testing Library + MSW (`tests/mocks/handlers.ts` for API mocking)
 
 ### Infrastructure
 
 AWS us-east-1, deployed via GitHub Actions:
-- `deploy-web.yml` → S3 + CloudFront (static export)
+- `deploy-web.yml` → ECR + ECS Fargate (Next.js standalone container)
 - `deploy-api.yml` → ECR + ECS Fargate
 - `deploy-ai.yml` → S3 model artifacts for SageMaker
-- `terraform.yml` → Infrastructure changes
+- Terraform in `infra/` for all AWS resources
 
 SageMaker endpoints:
 - CLIP — real-time (ml.g4dn.xlarge)
@@ -127,7 +139,12 @@ SageMaker endpoints:
 ## Key Config
 
 - **Package manager**: Bun (lockfile: `bun.lock`)
+- **Node**: >= 20
+- **Python**: >= 3.10
 - **Prettier**: no semi, double quotes, trailing comma es5, tabWidth 2, tailwind plugin
 - **Python linting**: ruff (select E/W/F/I/B/C4/UP/ARG001/T201), mypy strict
 - **Python testing**: pytest with coverage
-- **CI**: On PR to main — bun install → lint → typecheck → build (web only)
+- **Web testing**: Vitest (jsdom) + MSW for unit, Playwright for E2E
+- **CI**: On PR to main — lint → typecheck → unit test → build → E2E (Playwright on Chromium)
+- **Path alias**: `@/` maps to `apps/web/` root in both source and tests
+- **Env var**: `NEXT_PUBLIC_API_URL` (defaults to `http://localhost:8000/api/v1`)

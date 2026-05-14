@@ -57,3 +57,10 @@ jobs:
         run: |
           tar -czf /tmp/qwen.tar.gz -C $HANDLERS_DIR inference_qwen.py
           aws s3 cp /tmp/qwen.tar.gz s3://decadriver-ai-assets-246859065778/models/qwen/source.tar.gz
+
+      - name: Build and push CatV2TON image
+        env:
+          ECR_URL: ${{ steps.ecr.outputs.registry }}/decadriver-catvton:latest
+        run: |
+          docker build -f "$HANDLERS_DIR/Dockerfile.catvton" -t "$ECR_URL" "$HANDLERS_DIR"
+          docker push "$ECR_URL"

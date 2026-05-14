@@ -38,13 +38,12 @@ def get_recommendations(
     if not embedding:
         raise HTTPException(status_code=502, detail="CLIP endpoint returned no embedding")
 
-    # pgvector cosine similarity search via raw SQL
-    # clip_embedding column stores JSON array; cast to vector for similarity
+    # pgvector cosine similarity search
     rows = session.exec(
         text(
             "SELECT id FROM garment "
             "WHERE clip_embedding IS NOT NULL "
-            "ORDER BY clip_embedding::vector <=> CAST(:emb AS vector) "
+            "ORDER BY clip_embedding <=> CAST(:emb AS vector) "
             "LIMIT :limit"
         ).bindparams(emb=str(embedding), limit=limit)
     ).all()

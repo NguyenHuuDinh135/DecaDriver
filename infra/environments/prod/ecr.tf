@@ -54,3 +54,8 @@ resource "aws_ecr_repository" "fashn" {
   name                 = "decadriver-fashn"
   image_tag_mutability = "MUTABLE"
 }
+
+resource "aws_ecr_repository" "catvton" {
+  name                 = "decadriver-catvton"
+  image_tag_mutability = "MUTABLE"
+}

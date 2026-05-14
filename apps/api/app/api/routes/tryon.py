@@ -73,10 +73,21 @@ def get_tryon_job(
         raise HTTPException(status_code=404, detail="Job not found")
 
     if job.status == JobStatus.pending and job.sagemaker_output_s3:
+        # Check for failure first
+        if sagemaker_client.check_async_failure(job.sagemaker_output_s3):
+            job.status = JobStatus.failed
+            session.add(job)
+            session.commit()
+            session.refresh(job)
+            return job
+
         result = sagemaker_client.get_async_result(job.sagemaker_output_s3)
         if result:
             job.status = JobStatus.completed
-            job.result_url = result.get("result_url")
+            result_url = result.get("result_url")
+            if result_url and result_url.startswith("s3://"):
+                result_url = sagemaker_client.generate_presigned_url(result_url)
+            job.result_url = result_url
             session.add(job)
             session.commit()
             session.refresh(job)
@@ -89,4 +100,19 @@ def list_tryon_jobs(*, session: SessionDep, current_user: CurrentUser) -> Any:
     jobs = session.exec(
         select(TryOnJob).where(TryOnJob.user_id == current_user.id)
     ).all()
+    for job in jobs:
+        if job.result_url and job.result_url.startswith("s3://"):
+            job.result_url = sagemaker_client.generate_presigned_url(job.result_url)
     return jobs
+
+
+@router.delete("/{job_id}")
+def delete_tryon_job(
+    *, session: SessionDep, current_user: CurrentUser, job_id: uuid.UUID
+) -> Any:
+    job = session.get(TryOnJob, job_id)
+    if not job or job.user_id != current_user.id:
+        raise HTTPException(status_code=404, detail="Job not found")
+    session.delete(job)
+    session.commit()
+    return {"message": "Job deleted"}

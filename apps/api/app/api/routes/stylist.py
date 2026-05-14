@@ -1,13 +1,19 @@
+import asyncio
 import uuid
 from typing import Any
 
 from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
 from sqlmodel import select
 
 from app.api.deps import CurrentUser, SessionDep
 from app.core.config import settings
 from app.models import StyleProfile, StyleProfilePublic
 from app.services.sagemaker_client import sagemaker_client
+
+
+class AnalyzeStyleRequest(BaseModel):
+    image_url: str
 
 router = APIRouter(prefix="/stylist", tags=["stylist"])
 
@@ -18,31 +24,30 @@ ANALYZE_PROMPT = (
 
 
 @router.post("/analyze", response_model=StyleProfilePublic)
-def analyze_style(
+async def analyze_style(
     *,
     session: SessionDep,
     current_user: CurrentUser,
-    image_url: str,
+    body: AnalyzeStyleRequest,
 ) -> Any:
     # Upload input to S3 then call Qwen async endpoint
     input_key = f"inputs/stylist/{current_user.id}/{uuid.uuid4()}.json"
     input_s3_uri = sagemaker_client.upload_json_to_s3(
         settings.AI_S3_BUCKET,
         input_key,
-        {"image_url": image_url, "prompt": ANALYZE_PROMPT},
+        {"image_url": body.image_url, "prompt": ANALYZE_PROMPT},
     )
 
     output_s3_uri = sagemaker_client.invoke_async_endpoint(
         settings.SAGEMAKER_QWEN_ENDPOINT, input_s3_uri
     )
 
-    # Poll synchronously (acceptable for onboarding flow, ~2-5s)
-    import time
+    # Poll asynchronously (acceptable for onboarding flow, ~2-5s)
     for _ in range(30):
         result = sagemaker_client.get_async_result(output_s3_uri)
         if result:
             break
-        time.sleep(1)
+        await asyncio.sleep(1)
     else:
         raise HTTPException(status_code=504, detail="Stylist analysis timed out")
 

@@ -1,6 +1,8 @@
 import json
+
 import boto3
 from botocore.exceptions import ClientError
+
 from app.core.config import settings
 
 
@@ -71,6 +73,27 @@ class SageMakerClient:
     def upload_bytes_to_s3(self, bucket: str, key: str, data: bytes, content_type: str = "application/octet-stream") -> str:
         self._s3.put_object(Bucket=bucket, Key=key, Body=data, ContentType=content_type)
         return f"s3://{bucket}/{key}"
+
+    def generate_presigned_url(self, s3_uri: str, expiration: int = 3600) -> str:
+        """Convert s3://bucket/key URI to a presigned HTTPS URL."""
+        bucket, key = s3_uri.replace("s3://", "").split("/", 1)
+        return self._s3.generate_presigned_url(
+            "get_object",
+            Params={"Bucket": bucket, "Key": key},
+            ExpiresIn=expiration,
+        )
+
+    def check_async_failure(self, output_s3_uri: str) -> bool:
+        """Check if an async inference job has failed by looking for .failure file."""
+        bucket, key = output_s3_uri.replace("s3://", "").split("/", 1)
+        failure_key = key + ".failure"
+        try:
+            self._s3.head_object(Bucket=bucket, Key=failure_key)
+            return True
+        except ClientError as e:
+            if e.response["Error"]["Code"] in ("404", "NoSuchKey"):
+                return False
+            raise
 
 
 sagemaker_client = SageMakerClient()

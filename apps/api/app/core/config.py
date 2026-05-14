@@ -100,6 +100,7 @@ class Settings(BaseSettings):
     SAGEMAKER_FASHN_ENDPOINT: str = ""
     SAGEMAKER_QWEN_ENDPOINT: str = ""
     SAGEMAKER_CLIP_ENDPOINT: str = ""
+    SAGEMAKER_CATVTON_ENDPOINT: str = ""
     SAGEMAKER_ROLE_ARN: str = ""
     DREAMBOOTH_IMAGE_URI: str = ""
 

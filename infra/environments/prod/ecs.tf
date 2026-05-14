@@ -131,6 +131,7 @@ resource "aws_ecs_task_definition" "api" {
       { name = "SAGEMAKER_FASHN_ENDPOINT", value = "decadriver-fashn-prod" },
       { name = "SAGEMAKER_QWEN_ENDPOINT",  value = "decadriver-qwen-prod" },
       { name = "SAGEMAKER_CLIP_ENDPOINT",  value = "decadriver-clip-prod" },
+      { name = "SAGEMAKER_CATVTON_ENDPOINT", value = "decadriver-catvton-prod" },
       { name = "SAGEMAKER_ROLE_ARN",       value = aws_iam_role.sagemaker.arn },
       { name = "FIRST_SUPERUSER",          value = var.first_superuser_email },
     ]

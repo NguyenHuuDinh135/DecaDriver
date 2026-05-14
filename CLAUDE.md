@@ -102,7 +102,8 @@ app/
     └── sagemaker_handlers/          # Deployed to SageMaker as inference code
         ├── inference_fashn.py       # FASHN v1.5 try-on
         ├── inference_clip.py        # CLIP embeddings for garment similarity
-        └── inference_qwen.py        # Qwen2.5-VL style analysis
+        ├── inference_qwen.py        # Qwen2.5-VL style analysis
+        └── inference_catvton.py     # CatV2TON video try-on
 ```
 
 Key patterns:
@@ -134,7 +135,21 @@ AWS us-east-1, deployed via GitHub Actions:
 
 SageMaker endpoints:
 - CLIP — real-time (ml.g4dn.xlarge)
-- FASHN + Qwen — async with scale-to-zero (ml.g5.2xlarge)
+- FASHN + Qwen + CatV2TON — async with scale-to-zero (ml.g5.2xlarge)
+
+### Deploy Script
+
+```bash
+./scripts/deploy.sh              # Full deploy (infra → AI → API → Web)
+./scripts/deploy.sh infra        # Terraform only
+./scripts/deploy.sh ai           # SageMaker handler images only
+./scripts/deploy.sh api          # API container + DB migrations
+./scripts/deploy.sh web          # Web container only
+./scripts/deploy.sh app          # API + Web (skip infra/AI)
+./scripts/deploy.sh verify       # Post-deploy health check
+```
+
+Requires: `aws` CLI authenticated, `docker` running, `terraform` installed.
 
 ## Key Config
 

@@ -140,3 +140,50 @@ resource "aws_ssm_parameter" "sagemaker_qwen_endpoint" {
   type  = "String"
   value = aws_sagemaker_endpoint.qwen[0].name
 }
+
+# ── CatV2TON — Video Try-On Async Endpoint ───────────────────────────────────
+
+resource "aws_sagemaker_model" "catvton" {
+  count              = var.create_ai_endpoints ? 1 : 0
+  name               = "decadriver-catvton-prod"
+  execution_role_arn = aws_iam_role.sagemaker.arn
+
+  primary_container {
+    image = "${aws_ecr_repository.catvton.repository_url}:latest"
+    environment = {
+      AI_S3_BUCKET                  = aws_s3_bucket.ai_assets.bucket
+      SAGEMAKER_CONTAINER_LOG_LEVEL = "20"
+    }
+  }
+}
+
+resource "aws_sagemaker_endpoint_configuration" "catvton" {
+  count = var.create_ai_endpoints ? 1 : 0
+  name  = "decadriver-catvton-prod"
+
+  production_variants {
+    variant_name           = "default"
+    model_name             = aws_sagemaker_model.catvton[0].name
+    instance_type          = "ml.g5.2xlarge"
+    initial_instance_count = 1
+  }
+
+  async_inference_config {
+    output_config {
+      s3_output_path = "s3://${aws_s3_bucket.ai_assets.bucket}/results/catvton/"
+    }
+  }
+}
+
+resource "aws_sagemaker_endpoint" "catvton" {
+  count                = var.create_ai_endpoints ? 1 : 0
+  name                 = "decadriver-catvton-prod"
+  endpoint_config_name = aws_sagemaker_endpoint_configuration.catvton[0].name
+}
+
+resource "aws_ssm_parameter" "sagemaker_catvton_endpoint" {
+  count = var.create_ai_endpoints ? 1 : 0
+  name  = "/decadriver/prod/sagemaker_catvton_endpoint"
+  type  = "String"
+  value = aws_sagemaker_endpoint.catvton[0].name
+}

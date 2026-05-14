@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 from enum import Enum
 from typing import Any
 
+from pgvector.sqlalchemy import Vector
 from pydantic import EmailStr
 from sqlalchemy import JSON, DateTime
 from sqlmodel import Field, Relationship, SQLModel
@@ -145,8 +146,7 @@ class Garment(SQLModel, table=True):
     title: str = Field(max_length=255)
     brand: str | None = Field(default=None, max_length=255)
     image_url: str
-    # clip_embedding stored as JSON array (pgvector handled via raw SQL in recommend route)
-    clip_embedding: list[float] | None = Field(default=None, sa_type=JSON)  # type: ignore[assignment]
+    clip_embedding: list[float] | None = Field(default=None, sa_type=Vector(768))  # type: ignore[assignment]
     created_at: datetime | None = Field(
         default_factory=get_datetime_utc,
         sa_type=DateTime(timezone=True),  # type: ignore
@@ -196,6 +196,29 @@ class TryOnJob(SQLModel, table=True):
 class TryOnJobPublic(SQLModel):
     id: uuid.UUID
     garment_id: uuid.UUID
+    status: JobStatus
+    result_url: str | None
+    created_at: datetime | None
+
+
+class VideoTryOnJob(SQLModel, table=True):
+    __tablename__ = "video_tryon_job"  # type: ignore[assignment]
+
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    user_id: uuid.UUID = Field(foreign_key="user.id", nullable=False, ondelete="CASCADE")
+    tryon_job_id: uuid.UUID = Field(foreign_key="tryon_job.id", nullable=False, ondelete="CASCADE")
+    status: JobStatus = Field(default=JobStatus.pending)
+    result_url: str | None = Field(default=None)
+    sagemaker_output_s3: str | None = Field(default=None)
+    created_at: datetime | None = Field(
+        default_factory=get_datetime_utc,
+        sa_type=DateTime(timezone=True),  # type: ignore
+    )
+
+
+class VideoTryOnJobPublic(SQLModel):
+    id: uuid.UUID
+    tryon_job_id: uuid.UUID
     status: JobStatus
     result_url: str | None
     created_at: datetime | None

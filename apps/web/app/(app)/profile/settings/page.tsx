@@ -10,6 +10,7 @@ import { toast } from "sonner"
 import {
   ArrowLeft,
   LogOut,
+  RefreshCw,
   Trash2,
 } from "lucide-react"
 import { Button } from "@workspace/ui/components/button"
@@ -222,6 +223,17 @@ export default function SettingsPage() {
       <Separator className="mt-6" />
 
       <section className="mt-4 px-4 space-y-3">
+        <Button
+          variant="outline"
+          className="w-full justify-start gap-2"
+          asChild
+        >
+          <Link href="/onboarding/avatar">
+            <RefreshCw className="size-4" />
+            Re-train AI Avatar
+          </Link>
+        </Button>
+
         <Button
           variant="outline"
           className="w-full justify-start gap-2"

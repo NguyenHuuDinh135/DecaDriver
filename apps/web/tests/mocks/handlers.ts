@@ -4,6 +4,7 @@ const BASE_URL = "http://localhost:8000/api/v1"
 
 let avatarJobStatus = "pending"
 let mockTryOnJobStatus = "completed"
+let mockVideoTryOnJobStatus = "pending"
 
 export function setMockAvatarStatus(status: string) {
   avatarJobStatus = status
@@ -11,6 +12,10 @@ export function setMockAvatarStatus(status: string) {
 
 export function setMockTryOnJobStatus(status: string) {
   mockTryOnJobStatus = status
+}
+
+export function setMockVideoTryOnJobStatus(status: string) {
+  mockVideoTryOnJobStatus = status
 }
 
 const MOCK_GARMENTS = [
@@ -368,5 +373,50 @@ export const handlers = [
 
     const recommendations = MOCK_GARMENTS.slice(0, limit)
     return HttpResponse.json(recommendations)
+  }),
+
+  http.post(`${BASE_URL}/video-tryon/`, ({ request }) => {
+    const authHeader = request.headers.get("Authorization")
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return HttpResponse.json({ detail: "Not authenticated" }, { status: 401 })
+    }
+
+    const url = new URL(request.url)
+    const tryonJobId = url.searchParams.get("tryon_job_id")
+
+    if (!tryonJobId) {
+      return HttpResponse.json(
+        { detail: "tryon_job_id is required" },
+        { status: 422 }
+      )
+    }
+
+    return HttpResponse.json({
+      id: "video-tryon-job-123",
+      tryon_job_id: tryonJobId,
+      status: "pending",
+      result_url: null,
+      created_at: "2026-05-14T12:00:00Z",
+    })
+  }),
+
+  http.get(`${BASE_URL}/video-tryon/:jobId`, ({ request, params }) => {
+    const authHeader = request.headers.get("Authorization")
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return HttpResponse.json({ detail: "Not authenticated" }, { status: 401 })
+    }
+
+    const { jobId } = params
+
+    return HttpResponse.json({
+      id: jobId,
+      tryon_job_id: "tryon-1",
+      status: mockVideoTryOnJobStatus,
+      result_url:
+        mockVideoTryOnJobStatus === "completed"
+          ? "https://cdn.example.com/results/video-look1.mp4"
+          : null,
+      created_at: "2026-05-14T12:00:00Z",
+    })
   }),
 ]

@@ -96,13 +96,13 @@ export default function LookDetailPage({ params }: PageProps) {
                 AI Stylist says
               </h3>
             </div>
-            {styleProfile.recommended_styles.length > 0 && (
+            {(styleProfile.recommended_styles ?? []).length > 0 && (
               <div>
                 <p className="text-xs text-muted-foreground mb-1.5">
                   Based on your profile, try pairing with:
                 </p>
                 <div className="flex flex-wrap gap-1.5">
-                  {styleProfile.recommended_styles.map((style) => (
+                  {(styleProfile.recommended_styles ?? []).map((style) => (
                     <Badge key={style} variant="secondary" className="text-[0.65rem]">
                       {style}
                     </Badge>
@@ -110,13 +110,13 @@ export default function LookDetailPage({ params }: PageProps) {
                 </div>
               </div>
             )}
-            {styleProfile.avoid_styles.length > 0 && (
+            {(styleProfile.avoid_styles ?? []).length > 0 && (
               <div>
                 <p className="text-xs text-muted-foreground mb-1.5">
                   You might want to avoid:
                 </p>
                 <div className="flex flex-wrap gap-1.5">
-                  {styleProfile.avoid_styles.map((style) => (
+                  {(styleProfile.avoid_styles ?? []).map((style) => (
                     <Badge
                       key={style}
                       variant="outline"

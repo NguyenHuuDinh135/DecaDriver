@@ -18,3 +18,11 @@ export interface TryOnJob {
   result_url: string | null
   created_at: string
 }
+
+export interface VideoTryOnJob {
+  id: string
+  tryon_job_id: string
+  status: "pending" | "processing" | "completed" | "failed"
+  result_url: string | null
+  created_at: string
+}

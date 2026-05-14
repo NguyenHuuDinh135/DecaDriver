@@ -164,7 +164,7 @@ resource "aws_sagemaker_endpoint_configuration" "catvton" {
   production_variants {
     variant_name           = "default"
     model_name             = aws_sagemaker_model.catvton[0].name
-    instance_type          = "ml.g5.2xlarge"
+    instance_type          = "ml.g5.xlarge"
     initial_instance_count = 1
   }
 

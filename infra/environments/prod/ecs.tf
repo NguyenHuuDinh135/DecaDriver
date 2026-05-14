@@ -134,6 +134,8 @@ resource "aws_ecs_task_definition" "api" {
       { name = "SAGEMAKER_CATVTON_ENDPOINT", value = "decadriver-catvton-prod" },
       { name = "SAGEMAKER_ROLE_ARN",       value = aws_iam_role.sagemaker.arn },
       { name = "FIRST_SUPERUSER",          value = var.first_superuser_email },
+      { name = "BACKEND_CORS_ORIGINS",     value = "http://${aws_lb.api.dns_name}" },
+      { name = "FRONTEND_HOST",            value = "http://${aws_lb.api.dns_name}" },
     ]
   }])
 }

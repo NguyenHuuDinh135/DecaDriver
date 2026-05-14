@@ -126,7 +126,7 @@ function TryOnResultContent() {
             <Share2 className="mr-2 size-4" />
             Share
           </Button>
-          <Button className="col-span-2">
+          <Button className="col-span-2" onClick={() => router.push("/wardrobe")}>
             <BookmarkPlus className="mr-2 size-4" />
             Save to Wardrobe
           </Button>

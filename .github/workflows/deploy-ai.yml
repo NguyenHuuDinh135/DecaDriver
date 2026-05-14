@@ -8,7 +8,7 @@ on:
       - "apps/api/app/services/sagemaker_handlers/**"
 
 env:
-  AWS_REGION: us-east-1
+  AWS_REGION: us-west-2
   HANDLERS_DIR: apps/api/app/services/sagemaker_handlers
 
 jobs:
@@ -56,4 +56,4 @@ jobs:
       - name: Upload Qwen handler to S3
         run: |
           tar -czf /tmp/qwen.tar.gz -C $HANDLERS_DIR inference_qwen.py
-          aws s3 cp /tmp/qwen.tar.gz s3://decadriver-ai-assets-809131193138/models/qwen/source.tar.gz
+          aws s3 cp /tmp/qwen.tar.gz s3://decadriver-ai-assets-246859065778/models/qwen/source.tar.gz

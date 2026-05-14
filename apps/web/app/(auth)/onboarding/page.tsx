@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { api } from "@/lib/api/client"
 import { StepWelcome } from "./steps/step-welcome"
 import { StepName } from "./steps/step-name"
 import { StepPreference, type Preference } from "./steps/step-preference"
@@ -44,10 +45,17 @@ export default function OnboardingPage() {
   const handleNameComplete = (name: string) => {
     setFormData((prev) => ({ ...prev, fullName: name }))
     goNext()
+
+    // Persist name to backend (fire-and-forget)
+    api.patch("/users/me", { full_name: name }).catch(() => {
+      // Non-blocking: don't prevent step progression on failure
+    })
   }
 
   const handlePreferenceSelect = (pref: Preference) => {
     setFormData((prev) => ({ ...prev, preference: pref }))
+    // TODO: Persist style preference to backend once a field/endpoint exists.
+    // Currently no `style_preference` field on UserUpdateMe or dedicated endpoint.
   }
 
   const handleAvatarComplete = (started: boolean) => {

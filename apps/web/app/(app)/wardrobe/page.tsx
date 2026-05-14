@@ -55,7 +55,7 @@ export default function WardrobePage() {
           {completed.map((job) => (
             <div key={job.id} className="group relative">
               <Link
-                href="/wardrobe/history"
+                href={`/feed/${job.id}`}
                 className="block aspect-[3/4] overflow-hidden rounded-xl bg-muted"
               >
                 {job.result_url && (
@@ -87,7 +87,7 @@ export default function WardrobePage() {
                     size="icon-sm"
                     className="size-6"
                     onClick={() =>
-                      setShareUrl(`https://decadriver.com/look/${job.id}`)
+                      setShareUrl(`${window.location.origin}/feed/${job.id}`)
                     }
                   >
                     <Share2 className="size-3" />

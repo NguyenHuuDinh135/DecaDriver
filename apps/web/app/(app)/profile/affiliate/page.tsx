@@ -18,7 +18,9 @@ export default function AffiliatePage() {
   const { data: user } = useCurrentUser()
   const [copied, setCopied] = useState(false)
 
-  const referralLink = `https://decadriver.com/ref/${user?.id ?? ""}`
+  const referralLink = typeof window !== "undefined"
+    ? `${window.location.origin}/ref/${user?.id ?? ""}`
+    : `/ref/${user?.id ?? ""}`
 
   function handleCopy() {
     navigator.clipboard.writeText(referralLink)

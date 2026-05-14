@@ -3,7 +3,7 @@ set -euo pipefail
 
 DIR="$(cd "$(dirname "$0")/environments/prod" && pwd)"
 HANDLERS_DIR="$(cd "$(dirname "$0")/../apps/api/app/services/sagemaker_handlers" && pwd)"
-AWS_REGION="$(aws configure get region 2>/dev/null || echo 'us-east-1')"
+AWS_REGION="$(aws configure get region 2>/dev/null || echo 'us-west-2')"
 
 cd "$DIR"
 

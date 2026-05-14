@@ -1,7 +1,7 @@
 "use client"
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { Suspense, useState, useEffect } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Sparkles, AlertCircle } from "lucide-react"
 import { GarmentPicker } from "@workspace/ui/components/blocks/try-on/garment-picker"
 import { Button } from "@workspace/ui/components/button"
@@ -9,10 +9,26 @@ import { useGarments, useCreateTryOn } from "@/lib/hooks/use-tryon"
 import { useHasAvatar } from "@/lib/hooks/use-avatar"
 
 export default function TryOnPage() {
+  return (
+    <Suspense>
+      <TryOnContent />
+    </Suspense>
+  )
+}
+
+function TryOnContent() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [selectedGarment, setSelectedGarment] = useState<string | null>(null)
   const [page, setPage] = useState(0)
   const limit = 20
+
+  useEffect(() => {
+    const garmentParam = searchParams.get("garment")
+    if (garmentParam) {
+      setSelectedGarment(garmentParam)
+    }
+  }, [searchParams])
 
   const hasAvatar = useHasAvatar()
   const { data: garmentsData, isLoading: isLoadingGarments } = useGarments(page, limit)

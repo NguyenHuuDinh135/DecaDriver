@@ -7,6 +7,7 @@ COPY apps/web/package.json ./apps/web/
 COPY packages/ui/package.json ./packages/ui/
 COPY packages/typescript-config/package.json ./packages/typescript-config/
 COPY packages/eslint-config/package.json ./packages/eslint-config/
+ENV COREPACK_ENABLE_STRICT=0
 RUN pnpm install --no-frozen-lockfile
 COPY . .
 ARG NEXT_PUBLIC_API_URL

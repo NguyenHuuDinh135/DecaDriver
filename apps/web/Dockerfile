@@ -8,15 +8,20 @@ RUN bun install
 ARG NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
 RUN cd apps/web && bun run --bun node_modules/next/dist/bin/next build
-RUN cd apps/web/.next/standalone && \
-    find . -type l | while read link; do \
-      target=$(readlink -f "$link" 2>/dev/null); \
-      if [ -n "$target" ] && [ -e "$target" ]; then \
-        rm -f "$link" && cp -r "$target" "$link"; \
+
+RUN set -e && \
+    cd /app/apps/web/.next/standalone && \
+    find . -type l | while IFS= read -r link; do \
+      dir=$(dirname "$link"); \
+      target=$(readlink "$link"); \
+      abs=$(cd "$dir" && cd "$(dirname "$target")" && echo "$(pwd)/$(basename "$target")"); \
+      if [ -e "$abs" ]; then \
+        rm -f "$link"; \
+        cp -r "$abs" "$link"; \
       else \
         rm -f "$link"; \
       fi; \
-    done || true
+    done
 
 FROM node:20-alpine AS runner
 WORKDIR /app

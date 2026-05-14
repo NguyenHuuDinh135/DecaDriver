@@ -82,19 +82,17 @@ preflight() {
 }
 
 # ── Step 1: Infrastructure (Terraform) ────────────────────────────────────────
+# Phase 1 (deploy_infra_base): create ECR, VPC, RDS, ECS — NO SageMaker endpoints
+# Phase 2 (deploy_infra_ai):   create SageMaker endpoints (requires images on ECR)
 
-deploy_infra() {
-  hr
-  log "STEP 1/4: Infrastructure (Terraform)"
-  local start
-  start=$(date +%s)
-
+_terraform_apply() {
+  local extra_args=("$@")
   cd "$REPO_ROOT/$INFRA_DIR"
 
-  terraform init -upgrade -input=false
+  terraform init -upgrade -input=false >/dev/null 2>&1
 
   log "Planning..."
-  local plan_args=(-input=false -out=tfplan)
+  local plan_args=(-input=false -out=tfplan "${extra_args[@]}")
   if [[ -n "${TF_VAR_FILE:-}" ]]; then
     plan_args+=(-var-file="$TF_VAR_FILE")
   fi
@@ -122,6 +120,32 @@ print(f'{adds} to add, {updates} to change, {deletes} to destroy')
 
   rm -f tfplan
   cd "$REPO_ROOT"
+}
+
+deploy_infra_base() {
+  hr
+  log "STEP 1/5: Base Infrastructure (VPC, RDS, ECR, ECS)"
+  local start
+  start=$(date +%s)
+  _terraform_apply
+  ok "Base infra done ($(elapsed "$start"))"
+}
+
+deploy_infra_ai_endpoints() {
+  hr
+  log "STEP 3/5: SageMaker Endpoints (requires images on ECR)"
+  local start
+  start=$(date +%s)
+  _terraform_apply -var create_ai_endpoints=true
+  ok "SageMaker endpoints done ($(elapsed "$start"))"
+}
+
+deploy_infra() {
+  hr
+  log "STEP 1: Full Infrastructure (Terraform)"
+  local start
+  start=$(date +%s)
+  _terraform_apply -var create_ai_endpoints=true
   ok "Infra done ($(elapsed "$start"))"
 }
 
@@ -348,8 +372,9 @@ main() {
 
   case "$target" in
     all)
-      deploy_infra
+      deploy_infra_base
       deploy_ai
+      deploy_infra_ai_endpoints
       deploy_api
       run_migrations
       deploy_web

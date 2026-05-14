@@ -19,6 +19,13 @@ async def train_avatar(
     current_user: CurrentUser,
     images: list[UploadFile],
 ) -> Any:
+    if not settings.DREAMBOOTH_IMAGE_URI or not settings.SAGEMAKER_ROLE_ARN:
+        raise HTTPException(
+            status_code=503,
+            detail="Avatar training is not available yet. DreamBooth infrastructure is being set up.",
+        )
+    if not settings.AI_S3_BUCKET:
+        raise HTTPException(status_code=503, detail="AI services not configured")
     if len(images) < 5:
         raise HTTPException(status_code=400, detail="Upload at least 5 images")
 

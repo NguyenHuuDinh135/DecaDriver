@@ -5,7 +5,7 @@ COPY apps/web/package.json ./apps/web/
 COPY packages/ui/package.json ./packages/ui/
 COPY packages/typescript-config/package.json ./packages/typescript-config/
 COPY packages/eslint-config/package.json ./packages/eslint-config/
-RUN bun install --frozen-lockfile
+RUN bun install
 
 FROM node:20-alpine AS builder
 WORKDIR /app

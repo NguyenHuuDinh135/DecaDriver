@@ -10,24 +10,29 @@ ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
 RUN cd apps/web && bun run --bun node_modules/next/dist/bin/next build
 
 RUN cd /app/apps/web/.next/standalone && \
-    find . -type l | while IFS= read -r link; do \
-      target=$(readlink "$link"); \
-      case "$target" in \
-        *node_modules/.bun/*) \
-          pkg=$(echo "$target" | sed 's|.*node_modules/.bun/|/app/node_modules/.bun/|'); \
-          if [ -e "$pkg" ]; then \
-            rm -f "$link" && cp -r "$pkg" "$link"; \
-          else \
-            rm -f "$link"; \
-          fi ;; \
-        *) \
-          resolved=$(cd "$(dirname "$link")" && readlink -f "$(basename "$link")" 2>/dev/null); \
-          if [ -n "$resolved" ] && [ -e "$resolved" ]; then \
-            rm -f "$link" && cp -r "$resolved" "$link"; \
-          else \
-            rm -f "$link"; \
-          fi ;; \
-      esac; \
+    for i in 1 2 3 4 5; do \
+      links=$(find . -type l 2>/dev/null); \
+      [ -z "$links" ] && break; \
+      echo "$links" | while IFS= read -r link; do \
+        target=$(readlink "$link"); \
+        case "$target" in \
+          *node_modules/.bun/*) \
+            pkg=$(echo "$target" | sed 's|.*node_modules/.bun/|/app/node_modules/.bun/|'); \
+            if [ -e "$pkg" ]; then \
+              rm -f "$link" && cp -rL "$pkg" "$link" 2>/dev/null || cp -r "$pkg" "$link" 2>/dev/null; \
+            else \
+              rm -f "$link"; \
+            fi ;; \
+          /*) \
+            if [ -e "$target" ]; then \
+              rm -f "$link" && cp -rL "$target" "$link" 2>/dev/null || cp -r "$target" "$link" 2>/dev/null; \
+            else \
+              rm -f "$link"; \
+            fi ;; \
+          *) \
+            rm -f "$link"; ;; \
+        esac; \
+      done; \
     done || true
 
 FROM node:20-alpine AS runner

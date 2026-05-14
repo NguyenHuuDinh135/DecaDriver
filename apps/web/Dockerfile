@@ -1,16 +1,13 @@
-FROM oven/bun:1.3 AS deps
+FROM node:20-alpine AS builder
 WORKDIR /app
+RUN apk add --no-cache libc6-compat
+ENV COREPACK_ENABLE_STRICT=0
 COPY package.json bun.lock turbo.json ./
 COPY apps/web/package.json ./apps/web/
 COPY packages/ui/package.json ./packages/ui/
 COPY packages/typescript-config/package.json ./packages/typescript-config/
 COPY packages/eslint-config/package.json ./packages/eslint-config/
-RUN bun install --backend=copyfile
-
-FROM node:20-alpine AS builder
-WORKDIR /app
-RUN apk add --no-cache libc6-compat
-COPY --from=deps /app/ ./
+RUN npm install --legacy-peer-deps
 COPY . .
 ARG NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}

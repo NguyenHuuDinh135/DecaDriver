@@ -7,9 +7,11 @@ Fallback behavior:
 - If SageMaker endpoint is unhealthy → auto-fallback to mock with warning
 """
 
+import json
 import time
 import uuid
 from collections import defaultdict
+from pathlib import Path
 from typing import Any
 
 from fastapi import APIRouter, File, HTTPException, Request, UploadFile
@@ -63,10 +65,25 @@ def _check_rate(ip: str) -> None:
     _rate[ip].append(now)
 
 
-# ── In-memory job store (sufficient for demo) ───────────────────────────
-_jobs: dict[str, dict[str, Any]] = {}
+# ── File-based job store (shared across workers) ────────────────────────
+_JOBS_DIR = Path("/tmp/decadriver-demo-jobs")
+_JOBS_DIR.mkdir(exist_ok=True)
 
 MOCK_RESULT_IMAGE = "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&h=900&fit=crop"
+
+
+def _save_job(job_id: str, data: dict[str, Any]) -> None:
+    (_JOBS_DIR / f"{job_id}.json").write_text(json.dumps(data))
+
+
+def _load_job(job_id: str) -> dict[str, Any] | None:
+    path = _JOBS_DIR / f"{job_id}.json"
+    if not path.exists():
+        return None
+    try:
+        return json.loads(path.read_text())
+    except (json.JSONDecodeError, OSError):
+        return None
 
 
 @router.post("/tryon")
@@ -87,12 +104,12 @@ async def demo_tryon(
     use_mock = _MOCK_MODE or not _is_endpoint_available()
 
     if use_mock:
-        _jobs[job_id] = {
+        _save_job(job_id, {
             "status": "processing",
             "output_s3_uri": None,
             "result_url": None,
             "mock_ready_at": time.time() + 3,
-        }
+        })
         return {"job_id": job_id, "status": "processing"}
 
     from app.services.sagemaker_client import sagemaker_client
@@ -129,11 +146,11 @@ async def demo_tryon(
         settings.SAGEMAKER_FASHN_ENDPOINT, input_s3_uri
     )
 
-    _jobs[job_id] = {
+    _save_job(job_id, {
         "status": "processing",
         "output_s3_uri": output_s3_uri,
         "result_url": None,
-    }
+    })
 
     return {"job_id": job_id, "status": "processing"}
 
@@ -141,20 +158,20 @@ async def demo_tryon(
 @router.get("/tryon/{job_id}")
 async def demo_tryon_status(job_id: str) -> dict[str, Any]:
     """Poll for demo try-on result."""
-    job = _jobs.get(job_id)
+    job = _load_job(job_id)
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
 
     if "mock_ready_at" in job:
         if job["status"] == "processing":
-            ready_at = job.get("mock_ready_at", 0)
-            if time.time() >= ready_at:
+            if time.time() >= job["mock_ready_at"]:
                 job["status"] = "completed"
                 job["result_url"] = MOCK_RESULT_IMAGE
+                _save_job(job_id, job)
         return {
             "job_id": job_id,
             "status": job["status"],
-            "result_url": job["result_url"],
+            "result_url": job.get("result_url"),
         }
 
     if job["status"] == "processing" and job["output_s3_uri"]:
@@ -162,6 +179,7 @@ async def demo_tryon_status(job_id: str) -> dict[str, Any]:
 
         if sagemaker_client.check_async_failure(job["output_s3_uri"]):
             job["status"] = "failed"
+            _save_job(job_id, job)
         else:
             result = sagemaker_client.get_async_result(job["output_s3_uri"])
             if result:
@@ -171,6 +189,7 @@ async def demo_tryon_status(job_id: str) -> dict[str, Any]:
                 else:
                     job["result_url"] = result_s3
                 job["status"] = "completed"
+                _save_job(job_id, job)
 
     return {
         "job_id": job_id,

@@ -144,7 +144,7 @@ Data flow:
 
 ### Infrastructure
 
-AWS us-east-1, deployed via GitHub Actions:
+AWS us-west-2, deployed via GitHub Actions:
 - `deploy-web.yml` → ECR + ECS Fargate (Next.js standalone container)
 - `deploy-api.yml` → ECR + ECS Fargate
 - `deploy-ai.yml` → S3 model artifacts for SageMaker
@@ -152,7 +152,8 @@ AWS us-east-1, deployed via GitHub Actions:
 
 SageMaker endpoints:
 - CLIP — real-time (ml.g4dn.xlarge)
-- FASHN + Qwen + CatV2TON — async with scale-to-zero (ml.g5.2xlarge)
+- FASHN + Qwen — async with scale-to-zero (ml.g5.2xlarge)
+- CatV2TON — async with scale-to-zero (ml.g5.xlarge)
 
 ### Deploy Script
 
@@ -163,12 +164,21 @@ SageMaker endpoints:
 ./scripts/deploy.sh api          # API container + DB migrations
 ./scripts/deploy.sh web          # Web container only
 ./scripts/deploy.sh app          # API + Web (skip infra/AI)
+./scripts/deploy.sh preflight    # Validate all artifacts before deploy
 ./scripts/deploy.sh verify       # Post-deploy health check
 ```
 
 Full `all` deploy order: `deploy_infra_base` → `deploy_ai` → `deploy_infra_ai_endpoints` → `deploy_api` → `run_migrations` → `deploy_web` → `verify`. This ensures ECR images exist before SageMaker endpoints reference them.
 
 Requires: `aws` CLI authenticated, `docker` running, `terraform` installed.
+
+### Operations Scripts
+
+```bash
+./scripts/preflight.sh           # Pre-deploy validation (SSM, ECR, S3, SageMaker)
+./scripts/download-models.sh     # Download FASHN weights from HuggingFace → S3
+./scripts/download-models.sh check  # Check what model artifacts are in S3
+```
 
 ### Dev Script
 

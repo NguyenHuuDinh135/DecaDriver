@@ -47,12 +47,22 @@ cd ~/DecaDriver
 ./scripts/deploy.sh api          # API container + DB migrations
 ./scripts/deploy.sh web          # Web container
 ./scripts/deploy.sh app          # API + Web (skip infra/AI)
+./scripts/deploy.sh preflight    # Validate all artifacts exist
 ./scripts/deploy.sh verify       # Health check only
 ```
 
 ---
 
 ## Lần đầu tiên deploy (Fresh AWS Account)
+
+### Bước 0: Download model weights
+
+```bash
+./scripts/download-models.sh fashn    # Download FASHN v1.5 (~2GB) → S3
+./scripts/download-models.sh check    # Kiểm tra models đã có trên S3 chưa
+```
+
+Chỉ cần chạy 1 lần. Script sẽ download từ HuggingFace, pack thành tar.gz, upload lên S3.
 
 ### Bước 1: Khởi tạo hạ tầng
 
@@ -253,6 +263,34 @@ aws ecs execute-command \
 
 ---
 
+## Preflight Checks (Tránh deploy lỗi)
+
+Chạy trước khi deploy để kiểm tra mọi artifacts đã sẵn sàng:
+
+```bash
+./scripts/preflight.sh
+# Hoặc:
+./scripts/deploy.sh preflight
+```
+
+Kiểm tra:
+1. AWS authentication
+2. SSM parameters (ALB DNS, DB password, secret key)
+3. ECR images (api, web, fashn, catvton)
+4. S3 model artifacts (FASHN weights, Qwen handler)
+5. SageMaker endpoint health
+
+Nếu thiếu gì → script báo rõ và gợi ý cách fix.
+
+### Auto-fallback (Demo endpoint)
+
+Demo endpoint (`/api/v1/demo/tryon`) có cơ chế tự fallback:
+- Nếu `AI_S3_BUCKET` rỗng → luôn trả mock result
+- Nếu FASHN endpoint không InService → tự fallback sang mock (placeholder image)
+- Health check cache 5 phút, không gọi SageMaker mỗi request
+
+---
+
 ## Kiến trúc deploy
 
 ```
@@ -285,7 +323,7 @@ Terraform (manual/script)
 | CLIP | `decadriver-clip-prod` | Realtime | ml.g4dn.xlarge | Embedding garments → recommend |
 | FASHN | `decadriver-fashn-prod` | Async | ml.g5.2xlarge | Image try-on (person + garment → ảnh) |
 | Qwen | `decadriver-qwen-prod` | Async | ml.g5.2xlarge | Style analysis (ảnh → body type, color tone) |
-| CatV2TON | `decadriver-catvton-prod` | Async | ml.g5.2xlarge | Video try-on (person + garment → MP4 5-10s) |
+| CatV2TON | `decadriver-catvton-prod` | Async | ml.g5.xlarge | Video try-on (person + garment → MP4 5-10s) |
 | DreamBooth | Training job | On-demand | ml.g5.2xlarge | Avatar LoRA training (ảnh user → model) |
 
 Async endpoints có scale-to-zero: không tốn tiền khi không dùng, cold start ~3-5 phút.

@@ -119,12 +119,15 @@ curl "http://decadriver-api-789464392.us-west-2.elb.amazonaws.com/api/v1/recomme
 curl -X POST http://decadriver-api-789464392.us-west-2.elb.amazonaws.com/api/v1/demo/tryon \
   -F "person_image=@person.jpg" \
   -F "garment_image=@garment.jpg"
-# Returns: {"job_id":"<uuid>","status":"pending"}
+# Returns: {"job_id":"<uuid>","status":"processing"}
 
-# Poll
+# Poll (wait 3-5s for mock, 30-60s for real AI)
 curl "http://decadriver-api-789464392.us-west-2.elb.amazonaws.com/api/v1/demo/tryon/<job_id>"
 # Returns: {"status":"completed","result_url":"https://..."}
 ```
+
+Auto-fallback: if FASHN endpoint is unhealthy, returns a placeholder image after 3s (mock mode).
+Rate limit: 5 requests per hour per IP.
 
 ---
 

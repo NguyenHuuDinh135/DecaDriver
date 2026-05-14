@@ -29,7 +29,11 @@ jobs:
       - name: Get API URL from SSM
         id: api_url
         run: |
-          ALB=$(aws ssm get-parameter --name /decadriver/prod/alb_dns_name --region ${{ env.AWS_REGION }} --query Parameter.Value --output text 2>/dev/null || echo "pending-deploy")
+          ALB=$(aws ssm get-parameter --name /decadriver/prod/alb_dns_name --region ${{ env.AWS_REGION }} --query Parameter.Value --output text 2>/dev/null || echo "")
+          if [ -z "$ALB" ]; then
+            echo "::error::SSM parameter /decadriver/prod/alb_dns_name not found. Run 'scripts/deploy.sh infra' first."
+            exit 1
+          fi
           echo "url=http://$ALB/api/v1" >> $GITHUB_OUTPUT
 
       - name: Login to ECR

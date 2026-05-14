@@ -243,14 +243,17 @@ deploy_web() {
   aws ecr get-login-password --region "$AWS_REGION" \
     | docker login --username AWS --password-stdin "$ECR_REGISTRY" 2>/dev/null
 
-  # Get API URL from SSM or ALB
-  local api_url
-  api_url=$(aws ssm get-parameter \
+  # Get API URL from SSM (must exist — run infra first)
+  local alb_dns
+  alb_dns=$(aws ssm get-parameter \
     --name /decadriver/prod/alb_dns_name \
     --region "$AWS_REGION" \
     --query Parameter.Value \
-    --output text 2>/dev/null || echo "pending-deploy")
-  api_url="http://${api_url}/api/v1"
+    --output text 2>/dev/null || echo "")
+  if [[ -z "$alb_dns" ]]; then
+    fail "SSM /decadriver/prod/alb_dns_name not found. Run './scripts/deploy.sh infra' first."
+  fi
+  local api_url="http://${alb_dns}/api/v1"
   log "NEXT_PUBLIC_API_URL=$api_url"
 
   local web_ecr="${ECR_REGISTRY}/decadriver-web"

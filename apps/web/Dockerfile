@@ -6,7 +6,7 @@ COPY apps/web/package.json ./apps/web/
 COPY packages/ui/ ./packages/ui/
 COPY packages/typescript-config/ ./packages/typescript-config/
 COPY packages/eslint-config/ ./packages/eslint-config/
-RUN bun install --production
+RUN bun install
 COPY apps/web/ ./apps/web/
 ARG NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}

@@ -404,8 +404,12 @@ main() {
     verify)
       verify
       ;;
+    preflight)
+      log "Running preflight checks..."
+      "$REPO_ROOT/scripts/preflight.sh"
+      ;;
     *)
-      fail "Unknown target: $target. Use: all|infra|ai|api|web|app|verify"
+      fail "Unknown target: $target. Use: all|infra|ai|api|web|app|preflight|verify"
       ;;
   esac
 

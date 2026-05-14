@@ -2,8 +2,9 @@
 Public demo endpoints – no authentication required.
 Allows visitors to try the AI virtual try-on from the landing page.
 
-When ENVIRONMENT=local and AI_S3_BUCKET is empty, returns mock results
-so the frontend can be tested without AWS credentials.
+Fallback behavior:
+- If AI_S3_BUCKET is empty → always mock (no AWS needed)
+- If SageMaker endpoint is unhealthy → auto-fallback to mock with warning
 """
 
 import time
@@ -17,7 +18,33 @@ from app.core.config import settings
 
 router = APIRouter(prefix="/demo", tags=["demo"])
 
-_MOCK_MODE = settings.ENVIRONMENT == "local" and not settings.AI_S3_BUCKET
+_MOCK_MODE = not settings.AI_S3_BUCKET
+_ENDPOINT_HEALTHY: bool | None = None
+_HEALTH_CHECK_AT: float = 0
+
+
+def _is_endpoint_available() -> bool:
+    """Check FASHN endpoint health, cached for 5 minutes."""
+    global _ENDPOINT_HEALTHY, _HEALTH_CHECK_AT
+    now = time.time()
+    if _ENDPOINT_HEALTHY is not None and now - _HEALTH_CHECK_AT < 300:
+        return _ENDPOINT_HEALTHY
+
+    if not settings.SAGEMAKER_FASHN_ENDPOINT:
+        _ENDPOINT_HEALTHY = False
+        _HEALTH_CHECK_AT = now
+        return False
+
+    try:
+        import boto3
+        sm = boto3.client("sagemaker", region_name=settings.AWS_REGION)
+        resp = sm.describe_endpoint(EndpointName=settings.SAGEMAKER_FASHN_ENDPOINT)
+        _ENDPOINT_HEALTHY = resp["EndpointStatus"] == "InService"
+    except Exception:
+        _ENDPOINT_HEALTHY = False
+
+    _HEALTH_CHECK_AT = now
+    return _ENDPOINT_HEALTHY
 
 # ── Simple in-memory rate limiter (per IP, resets on restart) ────────────
 _rate: dict[str, list[float]] = defaultdict(list)
@@ -57,7 +84,9 @@ async def demo_tryon(
 
     job_id = str(uuid.uuid4())
 
-    if _MOCK_MODE:
+    use_mock = _MOCK_MODE or not _is_endpoint_available()
+
+    if use_mock:
         _jobs[job_id] = {
             "status": "processing",
             "output_s3_uri": None,
@@ -116,7 +145,7 @@ async def demo_tryon_status(job_id: str) -> dict[str, Any]:
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
 
-    if _MOCK_MODE:
+    if "mock_ready_at" in job:
         if job["status"] == "processing":
             ready_at = job.get("mock_ready_at", 0)
             if time.time() >= ready_at:
@@ -131,13 +160,20 @@ async def demo_tryon_status(job_id: str) -> dict[str, Any]:
     if job["status"] == "processing" and job["output_s3_uri"]:
         from app.services.sagemaker_client import sagemaker_client
 
-        result = sagemaker_client.get_async_result(job["output_s3_uri"])
-        if result:
-            job["status"] = "completed"
-            job["result_url"] = result.get("result_url")
+        if sagemaker_client.check_async_failure(job["output_s3_uri"]):
+            job["status"] = "failed"
+        else:
+            result = sagemaker_client.get_async_result(job["output_s3_uri"])
+            if result:
+                result_s3 = result.get("result_url", "")
+                if result_s3.startswith("s3://"):
+                    job["result_url"] = sagemaker_client.generate_presigned_url(result_s3)
+                else:
+                    job["result_url"] = result_s3
+                job["status"] = "completed"
 
     return {
         "job_id": job_id,
         "status": job["status"],
-        "result_url": job["result_url"],
+        "result_url": job.get("result_url"),
     }

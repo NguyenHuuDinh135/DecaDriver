@@ -1,13 +1,19 @@
 FROM 763104351884.dkr.ecr.us-west-2.amazonaws.com/pytorch-inference:2.1.0-gpu-py310
 
-RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg git && rm -rf /var/lib/apt/lists/*
+
+RUN git clone --depth 1 https://github.com/Zheng-Chong/CatVTON.git /opt/catvton
 
 RUN pip install --no-cache-dir \
-    "catvton @ git+https://github.com/Zheng-Chong/CatVTON.git" \
+    diffusers>=0.25.0 \
+    transformers>=4.36.0 \
+    accelerate>=0.25.0 \
     boto3>=1.34 \
-    requests>=2.31
+    requests>=2.31 \
+    Pillow>=10.0
 
 COPY inference_catvton.py /opt/ml/code/inference.py
 
 ENV SAGEMAKER_PROGRAM=inference.py
 ENV CATVTON_WEIGHTS_DIR=/opt/ml/model/weights
+ENV PYTHONPATH="/opt/catvton:${PYTHONPATH}"

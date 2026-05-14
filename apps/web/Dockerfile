@@ -9,19 +9,26 @@ ARG NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
 RUN cd apps/web && bun run --bun node_modules/next/dist/bin/next build
 
-RUN set -e && \
-    cd /app/apps/web/.next/standalone && \
+RUN cd /app/apps/web/.next/standalone && \
     find . -type l | while IFS= read -r link; do \
-      dir=$(dirname "$link"); \
       target=$(readlink "$link"); \
-      abs=$(cd "$dir" && cd "$(dirname "$target")" && echo "$(pwd)/$(basename "$target")"); \
-      if [ -e "$abs" ]; then \
-        rm -f "$link"; \
-        cp -r "$abs" "$link"; \
-      else \
-        rm -f "$link"; \
-      fi; \
-    done
+      case "$target" in \
+        *node_modules/.bun/*) \
+          pkg=$(echo "$target" | sed 's|.*node_modules/.bun/|/app/node_modules/.bun/|'); \
+          if [ -e "$pkg" ]; then \
+            rm -f "$link" && cp -r "$pkg" "$link"; \
+          else \
+            rm -f "$link"; \
+          fi ;; \
+        *) \
+          resolved=$(cd "$(dirname "$link")" && readlink -f "$(basename "$link")" 2>/dev/null); \
+          if [ -n "$resolved" ] && [ -e "$resolved" ]; then \
+            rm -f "$link" && cp -r "$resolved" "$link"; \
+          else \
+            rm -f "$link"; \
+          fi ;; \
+      esac; \
+    done || true
 
 FROM node:20-alpine AS runner
 WORKDIR /app

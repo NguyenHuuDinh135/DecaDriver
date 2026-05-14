@@ -1,18 +1,15 @@
 FROM node:20-alpine AS builder
-RUN apk add --no-cache libc6-compat
-RUN npm install -g pnpm@9
+RUN apk add --no-cache libc6-compat curl bash
+RUN curl -fsSL https://bun.sh/install | bash
+ENV PATH="/root/.bun/bin:$PATH"
 WORKDIR /app
-COPY package.json turbo.json ./
-COPY apps/web/package.json ./apps/web/
-COPY packages/ui/package.json ./packages/ui/
-COPY packages/typescript-config/package.json ./packages/typescript-config/
-COPY packages/eslint-config/package.json ./packages/eslint-config/
-RUN node -e "const p=require('./package.json');delete p.packageManager;require('fs').writeFileSync('./package.json',JSON.stringify(p,null,2))"
-RUN pnpm install --no-frozen-lockfile
 COPY . .
+RUN bun install
 ARG NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
-RUN cd apps/web && npx next build
+RUN cd apps/web && bun run --bun node_modules/next/dist/bin/next build
+RUN cd apps/web/.next/standalone && \
+    find . -type l -exec sh -c 'for link; do target=$(readlink -f "$link") && rm "$link" && cp -r "$target" "$link" 2>/dev/null; done' _ {} +
 
 FROM node:20-alpine AS runner
 WORKDIR /app

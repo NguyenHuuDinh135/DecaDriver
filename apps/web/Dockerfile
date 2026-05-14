@@ -1,17 +1,13 @@
-FROM node:20-alpine AS base
-RUN apk add --no-cache libc6-compat
-RUN corepack enable && corepack prepare pnpm@latest --activate
-
-FROM base AS deps
+FROM oven/bun:1.3 AS deps
 WORKDIR /app
 COPY package.json bun.lock turbo.json ./
 COPY apps/web/package.json ./apps/web/
 COPY packages/ui/package.json ./packages/ui/
 COPY packages/typescript-config/package.json ./packages/typescript-config/
 COPY packages/eslint-config/package.json ./packages/eslint-config/
-RUN pnpm install --frozen-lockfile || (npm install -g bun && bun install --frozen-lockfile)
+RUN bun install --frozen-lockfile
 
-FROM base AS builder
+FROM node:20-alpine AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/apps/web/node_modules ./apps/web/node_modules

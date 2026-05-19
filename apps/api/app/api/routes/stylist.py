@@ -9,7 +9,7 @@ from sqlmodel import select
 from app.api.deps import CurrentUser, SessionDep
 from app.core.config import settings
 from app.models import StyleProfile, StyleProfilePublic
-from app.services.sagemaker_client import sagemaker_client
+from app.services.ai_client import ai_client
 
 
 class AnalyzeStyleRequest(BaseModel):
@@ -30,26 +30,17 @@ async def analyze_style(
     current_user: CurrentUser,
     body: AnalyzeStyleRequest,
 ) -> Any:
-    # Upload input to S3 then call Qwen async endpoint
-    input_key = f"inputs/stylist/{current_user.id}/{uuid.uuid4()}.json"
-    input_s3_uri = sagemaker_client.upload_json_to_s3(
-        settings.AI_S3_BUCKET,
-        input_key,
-        {"image_url": body.image_url, "prompt": ANALYZE_PROMPT},
-    )
+    # Call Qwen via Colab/ngrok (non-blocking await)
+    try:
+        result = await ai_client.invoke_qwen(
+            prompt=ANALYZE_PROMPT,
+            image_url=body.image_url
+        )
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Stylist service error: {str(e)}")
 
-    output_s3_uri = sagemaker_client.invoke_async_endpoint(
-        settings.SAGEMAKER_QWEN_ENDPOINT, input_s3_uri
-    )
-
-    # Poll asynchronously (acceptable for onboarding flow, ~2-5s)
-    for _ in range(30):
-        result = sagemaker_client.get_async_result(output_s3_uri)
-        if result:
-            break
-        await asyncio.sleep(1)
-    else:
-        raise HTTPException(status_code=504, detail="Stylist analysis timed out")
+    if not result:
+        raise HTTPException(status_code=504, detail="Stylist analysis failed")
 
     # Upsert StyleProfile
     existing = session.exec(

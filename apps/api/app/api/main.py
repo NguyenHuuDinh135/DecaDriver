@@ -2,6 +2,7 @@ from fastapi import APIRouter
 
 from app.api.routes import (
     affiliate,
+    ai_worker,
     avatar,
     demo,
     garments,
@@ -36,6 +37,7 @@ api_router.include_router(health.router)
 api_router.include_router(demo.router)
 api_router.include_router(garments.router)
 api_router.include_router(video_tryon.router)
+api_router.include_router(ai_worker.router)
 
 if settings.ENVIRONMENT == "local":
     api_router.include_router(private.router)

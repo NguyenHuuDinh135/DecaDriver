@@ -188,6 +188,13 @@ class TryOnJob(SQLModel, table=True):
     status: JobStatus = Field(default=JobStatus.pending)
     result_url: str | None = Field(default=None)
     sagemaker_output_s3: str | None = Field(default=None)
+
+    # Multi-worker support
+    worker_id: str | None = Field(default=None, max_length=255)
+    claimed_at: datetime | None = Field(default=None, sa_type=DateTime(timezone=True))  # type: ignore
+    retry_count: int = Field(default=0)
+    engine_preference: str | None = Field(default="auto", max_length=50)
+
     created_at: datetime | None = Field(
         default_factory=get_datetime_utc,
         sa_type=DateTime(timezone=True),  # type: ignore
@@ -201,6 +208,35 @@ class TryOnJobPublic(SQLModel):
     status: JobStatus
     result_url: str | None
     created_at: datetime | None
+
+
+class ComboTryOnJob(SQLModel, table=True):
+    __tablename__ = "combo_tryon_job"  # type: ignore[assignment]
+
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    user_id: uuid.UUID = Field(foreign_key="user.id", nullable=False, ondelete="CASCADE")
+    top_garment_id: uuid.UUID | None = Field(default=None, foreign_key="garment.id")
+    bottom_garment_id: uuid.UUID | None = Field(default=None, foreign_key="garment.id")
+    status: JobStatus = Field(default=JobStatus.pending)
+    result_url: str | None = Field(default=None)
+    created_at: datetime | None = Field(
+        default_factory=get_datetime_utc,
+        sa_type=DateTime(timezone=True),  # type: ignore
+    )
+
+
+class ComboTryOnJobPublic(SQLModel):
+    id: uuid.UUID
+    top_garment_id: uuid.UUID | None
+    bottom_garment_id: uuid.UUID | None
+    status: JobStatus
+    result_url: str | None
+    created_at: datetime | None
+
+
+class ComboTryOnCreate(SQLModel):
+    top_garment_id: uuid.UUID | None = None
+    bottom_garment_id: uuid.UUID | None = None
 
 
 class VideoTryOnJob(SQLModel, table=True):

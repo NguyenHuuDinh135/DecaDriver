@@ -96,4 +96,15 @@ class SageMakerClient:
             raise
 
 
+_client: SageMakerClient | None = None
+
+
+def get_sagemaker_client() -> SageMakerClient:
+    global _client
+    if _client is None:
+        _client = SageMakerClient()
+    return _client
+
+
+# Legacy singleton for existing code, but preferred usage is get_sagemaker_client()
 sagemaker_client = SageMakerClient()

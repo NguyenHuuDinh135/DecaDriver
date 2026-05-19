@@ -100,14 +100,9 @@ class Settings(BaseSettings):
     FIRST_SUPERUSER: EmailStr
     FIRST_SUPERUSER_PASSWORD: str
 
-    # AWS / SageMaker
+    # AWS storage + free GPU worker
     AWS_REGION: str = "us-west-2"
     AI_S3_BUCKET: str = ""
-    SAGEMAKER_FASHN_ENDPOINT: str = ""
-    SAGEMAKER_QWEN_ENDPOINT: str = ""
-    SAGEMAKER_CLIP_ENDPOINT: str = ""
-    SAGEMAKER_CATVTON_ENDPOINT: str = ""
-    SAGEMAKER_ROLE_ARN: str = ""
     DREAMBOOTH_IMAGE_URI: str = ""
     DEFAULT_MODEL_IMAGE_URL: str = "https://pub-c5e31b5c739b49f98436417772d15383.r2.dev/default_model.png"
 
@@ -115,6 +110,24 @@ class Settings(BaseSettings):
     SHOPEE_PROXY_SERVER: str | None = None  # Format: http://host:port
     SHOPEE_PROXY_USER: str | None = None
     SHOPEE_PROXY_PASS: str | None = None
+
+    # Multi-Provider AI Stack (Colab/HTTP workers)
+    HF_TOKEN: str = ""
+    FAL_KEY: str = ""
+    CLIP_API_URL: str = (
+        "https://api-inference.huggingface.co/models/openai/clip-vit-large-patch14"
+    )
+    QWEN_API_URL: str = ""
+    VIDEO_API_URL: str = ""
+    CATVTON_API_URL: str = ""
+
+    # Modal AI Endpoints (Consolidated Cloud AI)
+    MODAL_CLIP_URL: str = ""
+    MODAL_ANALYZE_URL: str = ""
+    MODAL_TRAIN_URL: str = ""
+
+    # Pull-based free GPU worker queue (Colab/Kaggle/Lightning)
+    AI_WORKER_TOKEN: str = ""
 
     def _check_default_secret(self, var_name: str, value: str | None) -> None:
         if value == "changethis":

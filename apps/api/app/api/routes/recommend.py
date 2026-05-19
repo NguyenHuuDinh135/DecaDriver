@@ -7,13 +7,13 @@ from sqlmodel import select
 from app.api.deps import CurrentUser, SessionDep
 from app.core.config import settings
 from app.models import Garment, GarmentPublic, StyleProfile
-from app.services.sagemaker_client import sagemaker_client
+from app.services.ai_client import ai_client
 
 router = APIRouter(prefix="/recommend", tags=["recommend"])
 
 
 @router.get("/", response_model=list[GarmentPublic])
-def get_recommendations(
+async def get_recommendations(
     *,
     session: SessionDep,
     current_user: CurrentUser,
@@ -27,16 +27,12 @@ def get_recommendations(
         # Fallback: return latest garments
         return session.exec(select(Garment).limit(limit)).all()
 
-    # Get style embedding from CLIP real-time endpoint
+    # Get style embedding from CLIP (now via Hugging Face API)
     style_text = " ".join(profile.recommended_styles or [])
-    clip_resp = sagemaker_client.invoke_realtime_endpoint(
-        settings.SAGEMAKER_CLIP_ENDPOINT,
-        {"text": style_text},
-    )
-    embedding: list[float] = clip_resp.get("embedding", [])
+    embedding = await ai_client.invoke_clip(style_text)
 
     if not embedding:
-        raise HTTPException(status_code=502, detail="CLIP endpoint returned no embedding")
+        raise HTTPException(status_code=502, detail="CLIP service returned no embedding")
 
     # pgvector cosine similarity search
     rows = session.exec(

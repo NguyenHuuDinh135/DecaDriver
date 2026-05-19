@@ -8,13 +8,12 @@ from app.api.deps import CurrentUser, SessionDep
 from app.core.config import settings
 from app.models import (
     Garment,
-    GarmentCreate,
     GarmentPublic,
     GarmentsPublic,
     GarmentUpdate,
     Message,
 )
-from app.services.sagemaker_client import sagemaker_client
+from app.services.ai_client import ai_client
 
 router = APIRouter(prefix="/garments", tags=["garments"])
 
@@ -52,7 +51,7 @@ def read_garment(session: SessionDep, id: uuid.UUID) -> Any:
 async def create_garment(
     *,
     session: SessionDep,
-    current_user: CurrentUser,
+    _current_user: CurrentUser,
     title: str = Form(...),
     brand: str | None = Form(None),
     image: UploadFile,
@@ -67,7 +66,7 @@ async def create_garment(
     # Upload image to S3
     data = await image.read()
     image_key = f"garments/{uuid.uuid4().hex}_{image.filename}"
-    sagemaker_client.upload_bytes_to_s3(
+    ai_client.upload_bytes_to_s3(
         settings.AI_S3_BUCKET,
         image_key,
         data,
@@ -81,11 +80,7 @@ async def create_garment(
     if brand:
         style_text = f"{brand} {title}"
 
-    clip_resp = sagemaker_client.invoke_realtime_endpoint(
-        settings.SAGEMAKER_CLIP_ENDPOINT,
-        {"text": style_text},
-    )
-    embedding: list[float] = clip_resp.get("embedding", [])
+    embedding = await ai_client.invoke_clip(text=style_text)
 
     if not embedding:
         raise HTTPException(status_code=502, detail="Failed to generate embedding")
@@ -106,7 +101,7 @@ async def create_garment(
 def update_garment(
     *,
     session: SessionDep,
-    current_user: CurrentUser,
+    _current_user: CurrentUser,
     id: uuid.UUID,
     garment_in: GarmentUpdate,
 ) -> Any:
@@ -127,7 +122,7 @@ def update_garment(
 
 @router.delete("/{id}")
 def delete_garment(
-    session: SessionDep, current_user: CurrentUser, id: uuid.UUID
+    session: SessionDep, _current_user: CurrentUser, id: uuid.UUID
 ) -> Message:
     """
     Delete a garment.

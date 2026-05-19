@@ -25,6 +25,7 @@ dependencies = [
     "curl-cffi>=0.15.0",
     "playwright>=1.60.0",
     "playwright-stealth>=2.0.3",
+    "fal-client>=1.0.0",
 ]
 
 [dependency-groups]

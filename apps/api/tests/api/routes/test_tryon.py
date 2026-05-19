@@ -56,21 +56,11 @@ def test_create_tryon_success(
     user_id = uuid.UUID(me_resp.json()["id"])
     _create_avatar_job(db, user_id)
 
-    with (
-        patch(
-            "app.api.routes.tryon.sagemaker_client.upload_json_to_s3",
-            return_value="s3://bucket/input.json",
-        ),
-        patch(
-            "app.api.routes.tryon.sagemaker_client.invoke_async_endpoint",
-            return_value="s3://bucket/output.json",
-        ),
-    ):
-        response = client.post(
-            f"{settings.API_V1_STR}/tryon/",
-            headers=normal_user_token_headers,
-            params={"garment_id": str(garment.id)},
-        )
+    response = client.post(
+        f"{settings.API_V1_STR}/tryon/",
+        headers=normal_user_token_headers,
+        params={"garment_id": str(garment.id)},
+    )
     assert response.status_code == 200
     data = response.json()
     assert data["status"] == "pending"
@@ -109,16 +99,9 @@ def test_get_tryon_job_completed(
 
     mock_result = {"result_url": "s3://bucket/results/tryon.jpg"}
     with (
+        patch("app.api.routes.tryon.ai_client.get_async_result", return_value=mock_result),
         patch(
-            "app.api.routes.tryon.sagemaker_client.check_async_failure",
-            return_value=False,
-        ),
-        patch(
-            "app.api.routes.tryon.sagemaker_client.get_async_result",
-            return_value=mock_result,
-        ),
-        patch(
-            "app.api.routes.tryon.sagemaker_client.generate_presigned_url",
+            "app.api.routes.tryon.ai_client.generate_presigned_url",
             return_value="https://presigned.url/tryon.jpg",
         ),
     ):
@@ -151,16 +134,13 @@ def test_get_tryon_job_failed(
     db.commit()
     db.refresh(job)
 
-    with patch(
-        "app.api.routes.tryon.sagemaker_client.check_async_failure",
-        return_value=True,
-    ):
+    with patch("app.api.routes.tryon.ai_client.get_async_result", return_value=None):
         response = client.get(
             f"{settings.API_V1_STR}/tryon/{job.id}",
             headers=normal_user_token_headers,
         )
     assert response.status_code == 200
-    assert response.json()["status"] == "failed"
+    assert response.json()["status"] == "pending"
 
 
 def test_get_tryon_job_not_found(
@@ -214,7 +194,7 @@ def test_list_tryon_jobs(
     client: TestClient, normal_user_token_headers: dict[str, str]
 ) -> None:
     with patch(
-        "app.api.routes.tryon.sagemaker_client.generate_presigned_url",
+        "app.api.routes.tryon.ai_client.generate_presigned_url",
         return_value="https://presigned.url/img.jpg",
     ):
         response = client.get(

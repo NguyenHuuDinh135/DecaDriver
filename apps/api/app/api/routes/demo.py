@@ -4,7 +4,7 @@ Allows visitors to try the AI virtual try-on from the landing page.
 
 Fallback behavior:
 - If AI_S3_BUCKET is empty → always mock (no AWS needed)
-- If SageMaker endpoint is unhealthy → auto-fallback to mock with warning
+- If AI provider is unhealthy → auto-fallback to mock with warning
 """
 
 import json
@@ -15,9 +15,10 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Any
 
-from fastapi import APIRouter, File, HTTPException, Request, UploadFile
+from fastapi import APIRouter, File, HTTPException, Request, UploadFile, BackgroundTasks
 
 from app.core.config import settings
+from app.services.ai_client import ai_client
 
 router = APIRouter(prefix="/demo", tags=["demo"])
 
@@ -27,22 +28,24 @@ _HEALTH_CHECK_AT: float = 0
 
 
 def _is_endpoint_available() -> bool:
-    """Check FASHN endpoint health, cached for 5 minutes."""
+    """Check Modal FASHN endpoint health, cached for 5 minutes."""
     global _ENDPOINT_HEALTHY, _HEALTH_CHECK_AT
     now = time.time()
     if _ENDPOINT_HEALTHY is not None and now - _HEALTH_CHECK_AT < 300:
         return _ENDPOINT_HEALTHY
 
-    if not settings.SAGEMAKER_FASHN_ENDPOINT:
+    if not settings.QWEN_API_URL:
         _ENDPOINT_HEALTHY = False
         _HEALTH_CHECK_AT = now
         return False
 
     try:
-        import boto3
-        sm = boto3.client("sagemaker", region_name=settings.AWS_REGION)
-        resp = sm.describe_endpoint(EndpointName=settings.SAGEMAKER_FASHN_ENDPOINT)
-        _ENDPOINT_HEALTHY = resp["EndpointStatus"] == "InService"
+        import httpx
+        with httpx.Client(timeout=5.0) as client:
+            resp = client.get(settings.QWEN_API_URL)
+            # Modal web endpoints return 405 for GET if only POST is allowed, 
+            # but if the server is up, it's "healthy" enough for demo.
+            _ENDPOINT_HEALTHY = resp.status_code in (200, 405)
     except Exception:
         _ENDPOINT_HEALTHY = False
 
@@ -90,6 +93,7 @@ def _load_job(job_id: str) -> dict[str, Any] | None:
 @router.post("/tryon")
 async def demo_tryon(
     request: Request,
+    background_tasks: BackgroundTasks,
     person_image: UploadFile = File(...),
     garment_image: UploadFile = File(...),
 ) -> dict[str, str]:
@@ -113,12 +117,10 @@ async def demo_tryon(
         })
         return {"job_id": job_id, "status": "processing"}
 
-    from app.services.sagemaker_client import sagemaker_client
-
     prefix = f"inputs/demo/{job_id}"
 
     person_bytes = await person_image.read()
-    person_s3 = sagemaker_client.upload_bytes_to_s3(
+    person_s3 = ai_client.upload_bytes_to_s3(
         settings.AI_S3_BUCKET,
         f"{prefix}/person.jpg",
         person_bytes,
@@ -126,25 +128,22 @@ async def demo_tryon(
     )
 
     garment_bytes = await garment_image.read()
-    garment_s3 = sagemaker_client.upload_bytes_to_s3(
+    garment_s3 = ai_client.upload_bytes_to_s3(
         settings.AI_S3_BUCKET,
         f"{prefix}/garment.jpg",
         garment_bytes,
         content_type=garment_image.content_type or "image/jpeg",
     )
 
-    input_key = f"{prefix}/input.json"
-    input_s3_uri = sagemaker_client.upload_json_to_s3(
-        settings.AI_S3_BUCKET,
-        input_key,
-        {
-            "person_image_url": person_s3,
-            "garment_image_url": garment_s3,
-        },
-    )
+    output_key = f"results/demo/{job_id}.png"
+    output_s3_uri = f"s3://{settings.AI_S3_BUCKET}/{output_key}"
 
-    output_s3_uri = sagemaker_client.invoke_async_endpoint(
-        settings.SAGEMAKER_FASHN_ENDPOINT, input_s3_uri
+    # Trigger Modal inference in background
+    background_tasks.add_task(
+        ai_client.invoke_fashn,
+        person_image_url=person_s3,
+        garment_image_url=garment_s3,
+        output_s3_uri=output_s3_uri
     )
 
     _save_job(job_id, {
@@ -176,21 +175,11 @@ async def demo_tryon_status(job_id: str) -> dict[str, Any]:
         }
 
     if job["status"] == "processing" and job["output_s3_uri"]:
-        from app.services.sagemaker_client import sagemaker_client
-
-        if sagemaker_client.check_async_failure(job["output_s3_uri"]):
-            job["status"] = "failed"
+        result = ai_client.get_async_result(job["output_s3_uri"])
+        if result:
+            job["result_url"] = ai_client.generate_presigned_url(job["output_s3_uri"])
+            job["status"] = "completed"
             _save_job(job_id, job)
-        else:
-            result = sagemaker_client.get_async_result(job["output_s3_uri"])
-            if result:
-                result_s3 = result.get("result_url", "")
-                if result_s3.startswith("s3://"):
-                    job["result_url"] = sagemaker_client.generate_presigned_url(result_s3)
-                else:
-                    job["result_url"] = result_s3
-                job["status"] = "completed"
-                _save_job(job_id, job)
 
     return {
         "job_id": job_id,

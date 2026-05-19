@@ -27,11 +27,16 @@ export function middleware(request: NextRequest) {
 
   let isAuthenticated = !!token
 
-  if (!isAuthenticated && hasLocalStorageToken) {
+  if (!isAuthenticated && hasLocalStorageToken && hasLocalStorageToken !== "undefined") {
     try {
-      const parsed = JSON.parse(hasLocalStorageToken)
+      // Handle potential URI encoding
+      const decoded = hasLocalStorageToken.includes("%") 
+        ? decodeURIComponent(hasLocalStorageToken) 
+        : hasLocalStorageToken
+      const parsed = JSON.parse(decoded)
       isAuthenticated = !!parsed?.state?.token
-    } catch {
+    } catch (e) {
+      console.error("Middleware auth parse error:", e)
       isAuthenticated = false
     }
   }

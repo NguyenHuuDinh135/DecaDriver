@@ -1,6 +1,6 @@
 "use client"
 
-import { use, useState } from "react"
+import { use, useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { Sparkles } from "lucide-react"
@@ -68,10 +68,15 @@ export default function LookDetailPage({ params }: PageProps) {
     )
   }
 
-  const shareUrl =
-    typeof window !== "undefined"
-      ? `${window.location.origin}/feed/${lookId}`
-      : ""
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  const shareUrl = mounted
+    ? `${window.location.origin}/feed/${lookId}`
+    : `/feed/${lookId}`
 
   return (
     <div className="h-full overflow-y-auto">

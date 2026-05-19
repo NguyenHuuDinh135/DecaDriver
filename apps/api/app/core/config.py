@@ -18,6 +18,12 @@ from typing_extensions import Self
 def parse_cors(v: Any) -> list[str] | str:
     if isinstance(v, str) and not v.startswith("["):
         return [i.strip() for i in v.split(",") if i.strip()]
+    elif isinstance(v, str) and v.startswith("[") and v.endswith("]"):
+        import json
+        try:
+            return json.loads(v)
+        except json.JSONDecodeError:
+            return v
     elif isinstance(v, list | str):
         return v
     raise ValueError(v)
@@ -103,6 +109,12 @@ class Settings(BaseSettings):
     SAGEMAKER_CATVTON_ENDPOINT: str = ""
     SAGEMAKER_ROLE_ARN: str = ""
     DREAMBOOTH_IMAGE_URI: str = ""
+    DEFAULT_MODEL_IMAGE_URL: str = "https://pub-c5e31b5c739b49f98436417772d15383.r2.dev/default_model.png"
+
+    # Shopee Proxy
+    SHOPEE_PROXY_SERVER: str | None = None  # Format: http://host:port
+    SHOPEE_PROXY_USER: str | None = None
+    SHOPEE_PROXY_PASS: str | None = None
 
     def _check_default_secret(self, var_name: str, value: str | None) -> None:
         if value == "changethis":

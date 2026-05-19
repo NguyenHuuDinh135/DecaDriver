@@ -42,10 +42,19 @@ export const useAuthStore = create<AuthStore>()(
           token_type: string
         }>("/login/access-token", undefined, { formData })
 
+        const token = response.access_token
         set({
-          token: response.access_token,
+          token,
           isAuthenticated: true,
         })
+
+        // Sync with cookies for middleware
+        const storageValue = JSON.stringify({
+          state: { token, isAuthenticated: true },
+          version: 0,
+        })
+        document.cookie = `auth-token=${token}; path=/; max-age=604800; SameSite=Lax`
+        document.cookie = `auth-storage=${encodeURIComponent(storageValue)}; path=/; max-age=604800; SameSite=Lax`
       },
 
       logout: () => {
@@ -54,10 +63,19 @@ export const useAuthStore = create<AuthStore>()(
           token: null,
           isAuthenticated: false,
         })
+        // Clear cookies
+        document.cookie = "auth-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT"
+        document.cookie = "auth-storage=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT"
       },
 
       setToken: (token: string) => {
         set({ token, isAuthenticated: true })
+        const storageValue = JSON.stringify({
+          state: { token, isAuthenticated: true },
+          version: 0,
+        })
+        document.cookie = `auth-token=${token}; path=/; max-age=604800; SameSite=Lax`
+        document.cookie = `auth-storage=${encodeURIComponent(storageValue)}; path=/; max-age=604800; SameSite=Lax`
       },
 
       setUser: (user: User) => {

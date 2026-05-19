@@ -8,6 +8,7 @@ Fallback behavior:
 """
 
 import json
+import tempfile
 import time
 import uuid
 from collections import defaultdict
@@ -66,8 +67,8 @@ def _check_rate(ip: str) -> None:
 
 
 # ── File-based job store (shared across workers) ────────────────────────
-_JOBS_DIR = Path("/tmp/decadriver-demo-jobs")
-_JOBS_DIR.mkdir(exist_ok=True)
+_JOBS_DIR = Path(tempfile.gettempdir()) / "decadriver-demo-jobs"
+_JOBS_DIR.mkdir(parents=True, exist_ok=True)
 
 MOCK_RESULT_IMAGE = "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&h=900&fit=crop"
 

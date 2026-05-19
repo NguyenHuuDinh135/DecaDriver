@@ -56,7 +56,9 @@ class User(UserBase, table=True):
         default_factory=get_datetime_utc,
         sa_type=DateTime(timezone=True),  # type: ignore
     )
+    # items: list["Item"] = Relationship(back_populates="owner", cascade_delete=True)
     items: list["Item"] = Relationship(back_populates="owner", cascade_delete=True)
+    affiliate_posts: list["AffiliatePost"] = Relationship(back_populates="owner", cascade_delete=True)
 
 
 # Properties to return via API, id is always required
@@ -269,3 +271,64 @@ class AvatarJobPublic(SQLModel):
     lora_s3_key: str | None
     reference_image_url: str | None
     created_at: datetime | None
+
+
+# ── Affiliate Models ──────────────────────────────────────────────────────────
+
+class AffiliatePost(SQLModel, table=True):
+    __tablename__ = "affiliate_post"  # type: ignore[assignment]
+
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    user_id: uuid.UUID = Field(foreign_key="user.id", nullable=False, ondelete="CASCADE")
+    tiki_link: str
+    product_image_url: str | None = Field(default=None)
+    ai_image_url: str | None = Field(default=None)
+    title: str | None = Field(default=None, max_length=255)
+    price: str | None = Field(default=None, max_length=50)
+    status: JobStatus = Field(default=JobStatus.pending)
+    is_active: bool = Field(default=True)
+    sagemaker_output_s3: str | None = Field(default=None)
+    created_at: datetime | None = Field(
+        default_factory=get_datetime_utc,
+        sa_type=DateTime(timezone=True),  # type: ignore
+    )
+    owner: User | None = Relationship(back_populates="affiliate_posts")
+
+
+class AffiliatePostCreate(SQLModel):
+    tiki_link: str
+    title: str | None = None
+    price: str | None = None
+    product_image_url: str | None = None
+
+
+class AffiliatePostPublic(SQLModel):
+    id: uuid.UUID
+    tiki_link: str | None
+    product_image_url: str | None
+    ai_image_url: str | None
+    title: str | None
+    price: str | None
+    status: JobStatus
+    created_at: datetime
+
+
+class AffiliateClick(SQLModel, table=True):
+    __tablename__ = "affiliate_click"  # type: ignore[assignment]
+
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    post_id: uuid.UUID = Field(foreign_key="affiliate_post.id", nullable=False, ondelete="CASCADE")
+    visitor_id: uuid.UUID | None = Field(default=None, foreign_key="user.id")
+    ip_address: str | None = Field(default=None, max_length=50)
+    user_agent: str | None = Field(default=None)
+    created_at: datetime | None = Field(
+        default_factory=get_datetime_utc,
+        sa_type=DateTime(timezone=True),  # type: ignore
+    )
+
+
+class AffiliateStats(SQLModel):
+    total_clicks: int
+    total_conversions: int
+    total_revenue: float
+    total_commission: float

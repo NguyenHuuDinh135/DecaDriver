@@ -145,3 +145,41 @@
     font-family: var(--font-serif), ui-serif, Georgia, serif;
   }
 }
+
+/* Onboarding animation keyframes */
+@layer utilities {
+  @keyframes ob-orbit {
+    0% { transform: translate(calc(-50% + var(--ob-x)), calc(-50% + var(--ob-y))) rotate(0deg) scale(1); }
+    50% { transform: translate(calc(-50% + var(--ob-x)), calc(-50% + var(--ob-y))) rotate(180deg) scale(0.92); }
+    100% { transform: translate(calc(-50% + var(--ob-x)), calc(-50% + var(--ob-y))) rotate(360deg) scale(1); }
+  }
+
+  @keyframes ob-shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+
+  @keyframes ob-float {
+    0%, 100% { transform: var(--ob-base-transform) translateY(0px); }
+    50% { transform: var(--ob-base-transform) translateY(var(--ob-float-y, -6px)); }
+  }
+
+  .animate-ob-orbit {
+    animation: ob-orbit var(--ob-orbit-duration, 12s) linear infinite;
+  }
+
+  .animate-ob-shimmer {
+    background-size: 200% 100%;
+    background-image: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.08) 50%,
+      transparent 100%
+    );
+    animation: ob-shimmer 2.4s ease-in-out infinite;
+  }
+
+  .animate-ob-float {
+    animation: ob-float var(--ob-float-duration, 4s) ease-in-out infinite;
+  }
+}

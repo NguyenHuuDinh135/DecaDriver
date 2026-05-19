@@ -1,10 +1,20 @@
+"use client"
+
+import { usePathname } from "next/navigation"
+
 export default function AuthLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  const pathname = usePathname()
+
+  if (pathname.startsWith("/onboarding")) {
+    return <div className="min-h-svh w-full bg-stone-50">{children}</div>
+  }
+
   return (
-    <div className="flex min-h-screen w-full flex-col items-center justify-center bg-secondary px-4 py-12">
+    <div className="flex min-h-svh w-full flex-col items-center justify-center bg-secondary px-4 py-12">
       <div className="mb-10">
         <h1 className="font-serif text-3xl tracking-tight text-foreground">
           DecaDriver

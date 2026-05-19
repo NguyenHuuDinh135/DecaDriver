@@ -5,7 +5,7 @@ import Link from "next/link"
 import { 
   ArrowLeft, Copy, Check, Plus, BarChart3, 
   MousePointer2, ShoppingBag, DollarSign, ExternalLink,
-  Loader2
+  Loader2, Trash2
 } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@workspace/ui/components/button"
@@ -43,28 +43,41 @@ export default function AffiliateDashboardPage() {
   const [posts, setPosts] = useState<AffiliatePost[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        const [statsData, postsData] = await Promise.all([
-          api.get<AffiliateStats>("/affiliate/me/stats"),
-          api.get<AffiliatePost[]>("/affiliate/me/posts")
-        ])
-        setStats(statsData)
-        setPosts(postsData)
-      } catch (error) {
-        console.error("Failed to fetch affiliate data", error)
-      } finally {
-        setIsLoading(false)
-      }
+  async function fetchData() {
+    try {
+      const [statsData, postsData] = await Promise.all([
+        api.get<AffiliateStats>("/affiliate/me/stats"),
+        api.get<AffiliatePost[]>("/affiliate/me/posts")
+      ])
+      setStats(statsData)
+      setPosts(postsData)
+    } catch (error) {
+      console.error("Failed to fetch affiliate data", error)
+    } finally {
+      setIsLoading(false)
     }
+  }
 
+  useEffect(() => {
     fetchData()
 
     // Refresh data when user returns to this tab (e.g. after clicking a link)
     window.addEventListener("focus", fetchData)
     return () => window.removeEventListener("focus", fetchData)
   }, [])
+
+  async function handleDeletePost(id: string) {
+    if (!confirm("Are you sure you want to delete this post? This will not affect your earned commission.")) return
+    
+    try {
+      await api.delete(`/affiliate/posts/${id}`)
+      toast.success("Post deleted")
+      fetchData()
+    } catch (error) {
+      toast.error("Failed to delete post")
+      console.error(error)
+    }
+  }
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 pb-16">
@@ -161,11 +174,21 @@ export default function AffiliateDashboardPage() {
                   <h3 className="text-sm font-medium line-clamp-1 mb-1">{post.title}</h3>
                   <div className="flex items-center justify-between text-xs">
                     <span className="text-primary font-bold">{post.price}</span>
-                    <Button variant="ghost" size="icon-sm" className="h-6 w-6" asChild>
-                      <a href={`${BASE_URL}/affiliate/click/${post.id}`} target="_blank" rel="noopener noreferrer">
-                        <ExternalLink className="h-3.3 w-3.3" />
-                      </a>
-                    </Button>
+                    <div className="flex items-center gap-1">
+                      <Button 
+                        variant="ghost" 
+                        size="icon-sm" 
+                        className="h-6 w-6 text-muted-foreground hover:text-destructive" 
+                        onClick={() => handleDeletePost(post.id)}
+                      >
+                        <Trash2 className="h-3.3 w-3.3" />
+                      </Button>
+                      <Button variant="ghost" size="icon-sm" className="h-6 w-6" asChild>
+                        <a href={`${BASE_URL}/affiliate/click/${post.id}`} target="_blank" rel="noopener noreferrer">
+                          <ExternalLink className="h-3.3 w-3.3" />
+                        </a>
+                      </Button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>

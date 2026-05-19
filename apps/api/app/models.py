@@ -286,6 +286,7 @@ class AffiliatePost(SQLModel, table=True):
     title: str | None = Field(default=None, max_length=255)
     price: str | None = Field(default=None, max_length=50)
     status: JobStatus = Field(default=JobStatus.pending)
+    is_active: bool = Field(default=True)
     sagemaker_output_s3: str | None = Field(default=None)
     created_at: datetime | None = Field(
         default_factory=get_datetime_utc,

@@ -76,18 +76,11 @@ async def create_affiliate_post(
         .order_by(AvatarJob.created_at.desc())
     ).first()
 
-    # Use a default model if user doesn't have an avatar yet (for affiliate posts)
+    # Use user's avatar or default model if none exists
     person_image_url = avatar_job.reference_image_url if avatar_job else settings.DEFAULT_MODEL_IMAGE_URL
 
-    # Fallback to mock if AWS not configured
-    if not settings.AI_S3_BUCKET or not settings.SAGEMAKER_FASHN_ENDPOINT:
-        post.sagemaker_output_s3 = "mock://completed"
-        session.add(post)
-        session.commit()
-        session.refresh(post)
-        return post
-
-    if person_image_url:
+    # Trigger SageMaker if configured
+    if settings.AI_S3_BUCKET and settings.SAGEMAKER_FASHN_ENDPOINT:
         input_key = f"inputs/affiliate/{current_user.id}/{post.id}.json"
         input_s3_uri = sagemaker_client.upload_json_to_s3(
             settings.AI_S3_BUCKET,
@@ -95,6 +88,7 @@ async def create_affiliate_post(
             {
                 "person_image_url": person_image_url,
                 "garment_image_url": product_image_url,
+                "category": "tops" # Default to tops for affiliate posts
             },
         )
 
@@ -102,9 +96,14 @@ async def create_affiliate_post(
             settings.SAGEMAKER_FASHN_ENDPOINT, input_s3_uri
         )
         post.sagemaker_output_s3 = output_s3_uri
-        session.add(post)
-        session.commit()
-        session.refresh(post)
+    else:
+        # Fallback for local dev if AWS not configured - still set status to completed but use product image
+        post.status = JobStatus.completed
+        post.ai_image_url = product_image_url
+        
+    session.add(post)
+    session.commit()
+    session.refresh(post)
 
     return post
 
@@ -118,12 +117,7 @@ def get_affiliate_post(
 
     # Update status if pending
     if post.status == JobStatus.pending and post.sagemaker_output_s3:
-        if post.sagemaker_output_s3 == "mock://completed":
-            post.status = JobStatus.completed
-            post.ai_image_url = "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=800"
-            session.add(post)
-            session.commit()
-        elif sagemaker_client.check_async_failure(post.sagemaker_output_s3):
+        if sagemaker_client.check_async_failure(post.sagemaker_output_s3):
             post.status = JobStatus.failed
             session.add(post)
             session.commit()
@@ -145,9 +139,25 @@ def list_my_affiliate_posts(
     *, session: SessionDep, current_user: CurrentUser
 ) -> Any:
     posts = session.exec(
-        select(AffiliatePost).where(AffiliatePost.user_id == current_user.id)
+        select(AffiliatePost)
+        .where(AffiliatePost.user_id == current_user.id)
+        .where(AffiliatePost.is_active == True)
     ).all()
     return posts
+
+@router.delete("/posts/{post_id}")
+def delete_affiliate_post(
+    *, session: SessionDep, current_user: CurrentUser, post_id: uuid.UUID
+) -> Any:
+    post = session.get(AffiliatePost, post_id)
+    if not post or post.user_id != current_user.id:
+        raise HTTPException(status_code=404, detail="Post not found")
+    
+    # Soft delete: just mark as inactive
+    post.is_active = False
+    session.add(post)
+    session.commit()
+    return {"message": "Post deleted"}
 
 @router.get("/me/stats", response_model=AffiliateStats)
 def get_affiliate_stats(

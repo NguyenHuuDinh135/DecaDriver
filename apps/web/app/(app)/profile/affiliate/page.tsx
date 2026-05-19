@@ -4,7 +4,8 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import { 
   ArrowLeft, Copy, Check, Plus, BarChart3, 
-  MousePointer2, ShoppingBag, DollarSign, ExternalLink 
+  MousePointer2, ShoppingBag, DollarSign, ExternalLink,
+  Loader2
 } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@workspace/ui/components/button"
@@ -16,13 +17,13 @@ import {
   CardContent,
 } from "@workspace/ui/components/card"
 import { useCurrentUser } from "@/lib/hooks/use-auth"
-import { api } from "@/lib/api/client"
+import { api, BASE_URL } from "@/lib/api/client"
 
 interface AffiliateStats {
-  total_clicks: int
-  total_conversions: int
-  total_revenue: float
-  total_commission: float
+  total_clicks: number
+  total_conversions: number
+  total_revenue: number
+  total_commission: number
 }
 
 interface AffiliatePost {
@@ -57,7 +58,12 @@ export default function AffiliateDashboardPage() {
         setIsLoading(false)
       }
     }
+
     fetchData()
+
+    // Refresh data when user returns to this tab (e.g. after clicking a link)
+    window.addEventListener("focus", fetchData)
+    return () => window.removeEventListener("focus", fetchData)
   }, [])
 
   return (
@@ -131,25 +137,32 @@ export default function AffiliateDashboardPage() {
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {posts.map((post) => (
               <Card key={post.id} className="overflow-hidden group">
-                <div className="aspect-[4/5] relative bg-muted">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img 
-                    src={post.ai_image_url || post.product_image_url} 
-                    alt={post.title} 
-                    className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300"
-                  />
-                  {post.status !== 'completed' && (
-                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                      <Loader2 className="h-8 w-8 animate-spin text-white" />
-                    </div>
-                  )}
-                </div>
+                <a 
+                  href={`${BASE_URL}/affiliate/click/${post.id}`} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="block"
+                >
+                  <div className="aspect-[4/5] relative bg-muted">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img 
+                      src={post.ai_image_url || post.product_image_url} 
+                      alt={post.title} 
+                      className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300"
+                    />
+                    {post.status !== 'completed' && (
+                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                        <Loader2 className="h-8 w-8 animate-spin text-white" />
+                      </div>
+                    )}
+                  </div>
+                </a>
                 <CardContent className="p-3">
                   <h3 className="text-sm font-medium line-clamp-1 mb-1">{post.title}</h3>
                   <div className="flex items-center justify-between text-xs">
                     <span className="text-primary font-bold">{post.price}</span>
                     <Button variant="ghost" size="icon-sm" className="h-6 w-6" asChild>
-                      <a href={post.tiki_link} target="_blank" rel="noopener noreferrer">
+                      <a href={`${BASE_URL}/affiliate/click/${post.id}`} target="_blank" rel="noopener noreferrer">
                         <ExternalLink className="h-3.3 w-3.3" />
                       </a>
                     </Button>
@@ -195,7 +208,13 @@ function StatCard({ title, value, icon: Icon, color }: any) {
 
 function ReferralSection({ user }: any) {
   const [copied, setCopied] = useState(false)
-  const referralLink = typeof window !== "undefined"
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  const referralLink = mounted
     ? `${window.location.origin}/ref/${user?.id ?? ""}`
     : `/ref/${user?.id ?? ""}`
 

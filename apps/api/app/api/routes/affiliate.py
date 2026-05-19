@@ -153,20 +153,47 @@ def list_my_affiliate_posts(
 def get_affiliate_stats(
     *, session: SessionDep, current_user: CurrentUser
 ) -> Any:
-    # Count clicks
-    click_count = session.exec(
-        select(func.count(AffiliateClick.id))
-        .join(AffiliatePost)
-        .where(AffiliatePost.user_id == current_user.id)
-    ).one()
+    # Get all user's posts to calculate based on real prices
+    posts = session.exec(
+        select(AffiliatePost).where(AffiliatePost.user_id == current_user.id)
+    ).all()
+    
+    total_clicks = 0
+    total_revenue = 0.0
+    total_commission = 0.0
+    
+    for post in posts:
+        # Count clicks for this specific post
+        click_count = session.exec(
+            select(func.count(AffiliateClick.id))
+            .where(AffiliateClick.post_id == post.id)
+        ).one()
+        
+        if click_count > 0:
+            total_clicks += click_count
+            
+            # Parse price (e.g., "150.000đ" -> 150000)
+            price_str = post.price or "0"
+            clean_price = price_str.replace("đ", "").replace(".", "").replace(",", "").strip()
+            try:
+                price_val = float(clean_price)
+            except ValueError:
+                price_val = 0.0
+                
+            # For demo: 1 click = 1 conversion
+            # Revenue = price * conversions
+            # Commission = 10% of revenue
+            revenue_for_post = price_val * click_count
+            commission_for_post = revenue_for_post * 0.10
+            
+            total_revenue += revenue_for_post
+            total_commission += commission_for_post
 
-    # In a real app, we'd calculate conversions and revenue from a Commission table
-    # For now, let's return some realistic-looking data
     return {
-        "total_clicks": click_count,
-        "total_conversions": int(click_count * 0.05), # 5% conversion rate mock
-        "total_revenue": click_count * 150000 * 0.05, # Revenue mock
-        "total_commission": click_count * 150000 * 0.05 * 0.1, # 10% commission mock
+        "total_clicks": total_clicks,
+        "total_conversions": total_clicks, # 1:1 for demo
+        "total_revenue": total_revenue,
+        "total_commission": total_commission,
     }
 
 @router.get("/click/{post_id}")

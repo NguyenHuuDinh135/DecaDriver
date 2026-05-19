@@ -1,8 +1,6 @@
-import { describe, it, expect, beforeEach, vi } from "vitest"
-import { render, screen, fireEvent, waitFor } from "@testing-library/react"
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
-import { createElement, type ReactNode } from "react"
-import { useAuthStore } from "@/lib/stores/auth"
+import { fireEvent, render, screen, waitFor } from "@testing-library/react"
+import { createElement } from "react"
+import { beforeEach, describe, expect, it, vi } from "vitest"
 
 const mockPush = vi.fn()
 
@@ -13,236 +11,224 @@ vi.mock("next/navigation", () => ({
   }),
 }))
 
-vi.mock("browser-image-compression", () => ({
-  default: (file: File) => Promise.resolve(file),
-}))
-
-function createWrapper() {
-  const queryClient = new QueryClient({
-    defaultOptions: {
-      queries: { retry: false },
-      mutations: { retry: false },
-    },
-  })
-  return function Wrapper({ children }: { children: ReactNode }) {
-    return createElement(QueryClientProvider, { client: queryClient }, children)
+vi.mock("motion/react", () => {
+  const React = require("react")
+  return {
+    AnimatePresence: ({ children }: { children: React.ReactNode }) => children,
+    motion: new Proxy(
+      {},
+      {
+        get: (_target: unknown, prop: string) => {
+          return React.forwardRef((props: Record<string, unknown>, ref: unknown) => {
+            const {
+              initial: _i, animate: _a, exit: _e, transition: _t,
+              whileHover: _wh, whileTap: _wt, variants: _v,
+              ...rest
+            } = props
+            return React.createElement(prop, { ...rest, ref })
+          })
+        },
+      }
+    ),
+    useReducedMotion: () => false,
   }
+})
+
+async function renderOnboarding() {
+  const OnboardingPage = (await import("../page")).default
+  render(createElement(OnboardingPage))
 }
 
-describe("Onboarding Wizard", () => {
+async function advanceToCapture() {
+  await renderOnboarding()
+
+  fireEvent.click(screen.getByRole("button", { name: "Continue" }))
+  fireEvent.click(screen.getByRole("button", { name: "Continue" }))
+  fireEvent.click(screen.getByRole("button", { name: "Start Selfies" }))
+
+  await waitFor(() => {
+    expect(
+      screen.getByRole("heading", { name: "Look straight ahead" })
+    ).toBeInTheDocument()
+  })
+}
+
+async function captureAllSelfies() {
+  await advanceToCapture()
+
+  for (let index = 0; index < 6; index += 1) {
+    fireEvent.click(screen.getByRole("button", { name: "Capture" }))
+  }
+
+  await waitFor(() => {
+    expect(
+      screen.getByRole("heading", { name: "Selfies complete" })
+    ).toBeInTheDocument()
+    expect(screen.getByText("6 / 6")).toBeInTheDocument()
+  })
+
+  fireEvent.click(screen.getByRole("button", { name: "Continue" }))
+}
+
+async function advanceToReview() {
+  await captureAllSelfies()
+
+  await waitFor(() => {
+    expect(screen.getByText("Add 2 full-length photos")).toBeInTheDocument()
+  })
+
+  fireEvent.click(
+    screen.getByRole("button", { name: "Add full body photo 1" })
+  )
+  fireEvent.click(
+    screen.getByRole("button", { name: "Add full body photo 2" })
+  )
+
+  fireEvent.click(screen.getByRole("button", { name: "Continue" }))
+
+  await waitFor(() => {
+    expect(screen.getByText("Review your image profile")).toBeInTheDocument()
+  })
+}
+
+async function advanceToNotifications() {
+  await advanceToReview()
+
+  fireEvent.click(screen.getByRole("button", { name: "Create Likeness" }))
+
+  await waitFor(() => {
+    expect(screen.getByText("One more thing")).toBeInTheDocument()
+  })
+}
+
+describe("Likeness onboarding flow", () => {
   beforeEach(() => {
     mockPush.mockClear()
-    useAuthStore.setState({
-      user: {
-        id: "user-123",
-        email: "test@example.com",
-        full_name: "Test User",
-        is_active: true,
-      },
-      token: "mock-jwt-token",
-      isAuthenticated: true,
+  })
+
+  it("renders the webapp likeness intro as the active onboarding route", async () => {
+    await renderOnboarding()
+
+    expect(
+      screen.getByRole("heading", { name: "Create your likeness" })
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText(/Build a private image profile/i)
+    ).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Continue" })).toBeEnabled()
+    expect(screen.getByRole("progressbar")).toHaveAttribute(
+      "aria-valuenow",
+      "1"
+    )
+  })
+
+  it("moves through intro, privacy, selfie instructions, and back navigation", async () => {
+    await renderOnboarding()
+
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }))
+    expect(
+      screen.getByRole("heading", { name: "Privacy first" })
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText(/They are not uploaded or shared/i)
+    ).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole("button", { name: "Back" }))
+    expect(screen.getByText("Create your likeness")).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }))
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }))
+    expect(
+      screen.getByRole("heading", { name: "Take 6 selfies" })
+    ).toBeInTheDocument()
+    expect(screen.getAllByText("Straight ahead").length).toBeGreaterThan(0)
+    expect(screen.getByRole("button", { name: "Start Selfies" })).toBeEnabled()
+  })
+
+  it("captures six mock selfies and advances prompts", async () => {
+    await advanceToCapture()
+
+    fireEvent.click(screen.getByRole("button", { name: "Capture" }))
+
+    await waitFor(() => {
+      expect(screen.getByText("1 / 6")).toBeInTheDocument()
+      expect(
+        screen.getByRole("heading", { name: "Turn to your left profile" })
+      ).toBeInTheDocument()
+    })
+
+    for (let index = 0; index < 5; index += 1) {
+      fireEvent.click(screen.getByRole("button", { name: "Capture" }))
+    }
+
+    await waitFor(() => {
+      expect(screen.getByText("6 / 6")).toBeInTheDocument()
+      expect(
+        screen.getByRole("heading", { name: "Selfies complete" })
+      ).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: "Continue" })).toBeEnabled()
     })
   })
 
-  it("renders welcome step initially", async () => {
-    const OnboardingPage = (await import("../page")).default
-    const Wrapper = createWrapper()
+  it("gates full-body Continue until both mock slots are filled", async () => {
+    await captureAllSelfies()
 
-    render(createElement(Wrapper, null, createElement(OnboardingPage)))
+    const continueButton = screen.getByRole("button", { name: "Continue" })
+    expect(continueButton).toBeDisabled()
 
-    expect(screen.getByText("Welcome to DecaDriver")).toBeInTheDocument()
-    expect(screen.getByText("Get Started")).toBeInTheDocument()
+    fireEvent.click(
+      screen.getByRole("button", { name: "Add full body photo 1" })
+    )
+    expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled()
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Add full body photo 2" })
+    )
+    expect(screen.getByRole("button", { name: "Continue" })).toBeEnabled()
   })
 
-  it("navigates forward from welcome to name step", async () => {
-    const OnboardingPage = (await import("../page")).default
-    const Wrapper = createWrapper()
+  it("keeps review CTA disabled when a required image is removed", async () => {
+    await advanceToReview()
 
-    render(createElement(Wrapper, null, createElement(OnboardingPage)))
-
-    fireEvent.click(screen.getByText("Get Started"))
-
-    await waitFor(() => {
-      expect(screen.getByText(/what.*s your name/i)).toBeInTheDocument()
+    const createButton = screen.getByRole("button", {
+      name: "Create Likeness",
     })
-  })
+    expect(createButton).toBeEnabled()
 
-  it("navigates back from name step to welcome", async () => {
-    const OnboardingPage = (await import("../page")).default
-    const Wrapper = createWrapper()
-
-    render(createElement(Wrapper, null, createElement(OnboardingPage)))
-
-    fireEvent.click(screen.getByText("Get Started"))
-
-    await waitFor(() => {
-      expect(screen.getByText("Back")).toBeInTheDocument()
-    })
-
-    fireEvent.click(screen.getByText("Back"))
-
-    await waitFor(() => {
-      expect(screen.getByText("Welcome to DecaDriver")).toBeInTheDocument()
-    })
-  })
-
-  it("validates name is required with minimum 2 characters", async () => {
-    const OnboardingPage = (await import("../page")).default
-    const Wrapper = createWrapper()
-
-    render(createElement(Wrapper, null, createElement(OnboardingPage)))
-
-    fireEvent.click(screen.getByText("Get Started"))
-
-    await waitFor(() => {
-      expect(screen.getByLabelText("Full Name")).toBeInTheDocument()
-    })
-
-    const input = screen.getByLabelText("Full Name")
-    fireEvent.change(input, { target: { value: "A" } })
-
-    const continueBtn = screen.getByRole("button", { name: /continue/i })
-    fireEvent.click(continueBtn)
+    fireEvent.click(
+      screen.getByRole("button", { name: "Remove Straight ahead selfie" })
+    )
 
     await waitFor(() => {
       expect(
-        screen.getByText("Name must be at least 2 characters")
-      ).toBeInTheDocument()
+        screen.getByRole("button", { name: "Create Likeness" })
+      ).toBeDisabled()
+      expect(screen.getByText("5 / 6")).toBeInTheDocument()
     })
   })
 
-  it("advances to preference step after valid name submission", async () => {
-    const OnboardingPage = (await import("../page")).default
-    const Wrapper = createWrapper()
+  it("allows skipping notifications and routing to brand selection", async () => {
+    await advanceToNotifications()
 
-    render(createElement(Wrapper, null, createElement(OnboardingPage)))
-
-    fireEvent.click(screen.getByText("Get Started"))
+    fireEvent.click(screen.getByRole("button", { name: "Skip" }))
 
     await waitFor(() => {
-      expect(screen.getByLabelText("Full Name")).toBeInTheDocument()
+      expect(screen.getByText("Creating your likeness")).toBeInTheDocument()
     })
 
-    const input = screen.getByLabelText("Full Name")
-    fireEvent.change(input, { target: { value: "Jane Doe" } })
-
-    const continueBtn = screen.getByRole("button", { name: /continue/i })
-    fireEvent.click(continueBtn)
-
-    await waitFor(() => {
-      expect(screen.getByText("What do you wear?")).toBeInTheDocument()
-    })
+    fireEvent.click(screen.getByRole("button", { name: "Select Brands" }))
+    expect(mockPush).toHaveBeenCalledWith("/onboarding/brands")
   })
 
-  it("cannot advance from preference step without selection", async () => {
-    const OnboardingPage = (await import("../page")).default
-    const Wrapper = createWrapper()
+  it("allows enabling mock notifications before creating", async () => {
+    await advanceToNotifications()
 
-    render(createElement(Wrapper, null, createElement(OnboardingPage)))
-
-    fireEvent.click(screen.getByText("Get Started"))
-
-    await waitFor(() => {
-      expect(screen.getByLabelText("Full Name")).toBeInTheDocument()
-    })
-
-    fireEvent.change(screen.getByLabelText("Full Name"), {
-      target: { value: "Jane Doe" },
-    })
-    fireEvent.click(screen.getByRole("button", { name: /continue/i }))
-
-    await waitFor(() => {
-      expect(screen.getByText("What do you wear?")).toBeInTheDocument()
-    })
-
-    const continueBtn = screen.getByRole("button", { name: /continue/i })
-    expect(continueBtn).toBeDisabled()
-  })
-
-  it("allows preference selection and advances", async () => {
-    const OnboardingPage = (await import("../page")).default
-    const Wrapper = createWrapper()
-
-    render(createElement(Wrapper, null, createElement(OnboardingPage)))
-
-    fireEvent.click(screen.getByText("Get Started"))
-
-    await waitFor(() => {
-      expect(screen.getByLabelText("Full Name")).toBeInTheDocument()
-    })
-
-    fireEvent.change(screen.getByLabelText("Full Name"), {
-      target: { value: "Jane Doe" },
-    })
-    fireEvent.click(screen.getByRole("button", { name: /continue/i }))
-
-    await waitFor(() => {
-      expect(screen.getByText("Menswear")).toBeInTheDocument()
-    })
-
-    fireEvent.click(screen.getByText("Menswear"))
-
-    const continueBtn = screen.getByRole("button", { name: /continue/i })
-    expect(continueBtn).not.toBeDisabled()
-
-    fireEvent.click(continueBtn)
-
-    await waitFor(() => {
-      expect(screen.getByText("Create your likeness")).toBeInTheDocument()
-    })
-  })
-
-  it("shows completion step with redirect button after skipping avatar", async () => {
-    const OnboardingPage = (await import("../page")).default
-    const Wrapper = createWrapper()
-
-    render(createElement(Wrapper, null, createElement(OnboardingPage)))
-
-    fireEvent.click(screen.getByText("Get Started"))
-
-    await waitFor(() => {
-      expect(screen.getByLabelText("Full Name")).toBeInTheDocument()
-    })
-
-    fireEvent.change(screen.getByLabelText("Full Name"), {
-      target: { value: "Jane Doe" },
-    })
-    fireEvent.click(screen.getByRole("button", { name: /continue/i }))
-
-    await waitFor(() => {
-      expect(screen.getByText("Menswear")).toBeInTheDocument()
-    })
-
-    fireEvent.click(screen.getByText("Womenswear"))
-    fireEvent.click(screen.getByRole("button", { name: /continue/i }))
-
-    await waitFor(() => {
-      expect(screen.getByText("Skip for now")).toBeInTheDocument()
-    })
-
-    fireEvent.click(screen.getByText("Skip for now"))
-
-    await waitFor(() => {
-      expect(screen.getByText(/you.*re all set/i)).toBeInTheDocument()
-    })
-
-    expect(
-      screen.getByText("Avatar skipped (create later in profile)")
-    ).toBeInTheDocument()
-
-    fireEvent.click(screen.getByText("Start Exploring"))
-    expect(mockPush).toHaveBeenCalledWith("/feed")
-  })
-
-  it("displays progress indicator with correct number of dots", async () => {
-    const OnboardingPage = (await import("../page")).default
-    const Wrapper = createWrapper()
-
-    const { container } = render(
-      createElement(Wrapper, null, createElement(OnboardingPage))
+    fireEvent.click(
+      screen.getByRole("button", { name: "Enable Notifications" })
     )
 
-    const dots = container.querySelectorAll(".rounded-full.h-1")
-    expect(dots.length).toBe(5)
+    await waitFor(() => {
+      expect(screen.getByText("Creating your likeness")).toBeInTheDocument()
+    })
   })
 })

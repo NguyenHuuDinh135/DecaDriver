@@ -22,8 +22,8 @@ from huggingface_hub import snapshot_download, hf_hub_download
 from moviepy.editor import ImageClip
 
 # --- ⚙️ CẤU HÌNH ---
-NGROK_TOKEN = "$(os.environ.get("NGROK_TOKEN"))"
-HF_TOKEN = "$(os.environ.get("HF_TOKEN"))" 
+NGROK_TOKEN = os.environ.get("NGROK_TOKEN", "")
+HF_TOKEN = os.environ.get("HF_TOKEN", "")
 
 ngrok.set_auth_token(NGROK_TOKEN)
 nest_asyncio.apply()

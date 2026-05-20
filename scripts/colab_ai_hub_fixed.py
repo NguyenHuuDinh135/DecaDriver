@@ -66,7 +66,7 @@ remove = rembg_module.remove
 
 # --- ⚙️ CẤU HÌNH ---
 NGROK_TOKEN = os.environ.get("NGROK_TOKEN", "")
-HF_TOKEN = os.environ.get("HF_TOKEN", "")
+HF_TOKEN = os.environ.get("HF_TOKEN", "") 
 
 ngrok.set_auth_token(NGROK_TOKEN)
 nest_asyncio.apply()

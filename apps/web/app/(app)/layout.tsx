@@ -7,6 +7,7 @@ import {
   PlusCircle,
   ShoppingBag,
   User,
+  Sparkles,
 } from "lucide-react"
 import { cn } from "@workspace/ui/lib/utils"
 import { AvatarStatusBanner } from "@/components/avatar-status-banner"
@@ -16,6 +17,7 @@ const navItems = [
   { href: "/try-on", label: "Try-On", icon: Shirt },
   { href: "/create", label: "Create", icon: PlusCircle },
   { href: "/wardrobe", label: "Wardrobe", icon: ShoppingBag },
+  { href: "/onboarding", label: "Onboarding", icon: Sparkles },
   { href: "/profile", label: "Profile", icon: User },
 ] as const
 

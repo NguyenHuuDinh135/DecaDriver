@@ -16,7 +16,7 @@ const AUTH_STORAGE_VALUE = JSON.stringify({
 })
 
 async function setupAuth(page: import("@playwright/test").Page) {
-  await page.goto("/login")
+  await page.goto("/")
   await page.evaluate((value) => {
     localStorage.setItem("auth-storage", value)
   }, AUTH_STORAGE_VALUE)

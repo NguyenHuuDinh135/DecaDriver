@@ -108,7 +108,7 @@ export default function SettingsPage() {
     try {
       await deleteAccount.mutateAsync()
       logout()
-      router.push("/login")
+      router.push("/feed")
     } catch {
       toast.error("Failed to delete account")
     }

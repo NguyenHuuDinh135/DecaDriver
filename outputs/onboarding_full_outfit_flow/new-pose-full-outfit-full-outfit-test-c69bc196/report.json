@@ -1,0 +1,35 @@
+{
+  "run_id": "new-pose-full-outfit",
+  "user_id": "full-outfit-test-c69bc196",
+  "flow": "onboarding -> reference -> top try-on -> bottom try-on -> one final outfit image",
+  "local_outputs": {
+    "final": "/home/dinh/DecaDriver/outputs/onboarding_full_outfit_flow/new-pose-full-outfit-full-outfit-test-c69bc196/final_top_bottom_tryon.png",
+    "debug_reference": "/home/dinh/DecaDriver/outputs/onboarding_full_outfit_flow/new-pose-full-outfit-full-outfit-test-c69bc196/debug_01_reference.png",
+    "debug_top_applied": "/home/dinh/DecaDriver/outputs/onboarding_full_outfit_flow/new-pose-full-outfit-full-outfit-test-c69bc196/debug_02_top_applied.png"
+  },
+  "s3_outputs": {
+    "reference": "s3://decadriver-ai-assets-760033296277/ai-tests/onboarding-full-outfit/new-pose-full-outfit-full-outfit-test-c69bc196/outputs/01-reference.png",
+    "top_intermediate": "s3://decadriver-ai-assets-760033296277/ai-tests/onboarding-full-outfit/new-pose-full-outfit-full-outfit-test-c69bc196/outputs/02-top-applied.png",
+    "final": "s3://decadriver-ai-assets-760033296277/ai-tests/onboarding-full-outfit/new-pose-full-outfit-full-outfit-test-c69bc196/outputs/03-final-top-bottom.png"
+  },
+  "assets": {
+    "top": "/home/dinh/DecaDriver/test_assets/top_shirt.jpg",
+    "bottom": "/home/dinh/DecaDriver/test_assets/bottom_jeans.jpg"
+  },
+  "modal_results": {
+    "train": {
+      "status": "success",
+      "reference_image_url": "s3://decadriver-ai-assets-760033296277/ai-tests/onboarding-full-outfit/new-pose-full-outfit-full-outfit-test-c69bc196/outputs/01-reference.png",
+      "lora_s3_key": "avatars/full-outfit-test-c69bc196/reference-only",
+      "source_image_url": "https://decadriver-ai-assets-760033296277.s3.amazonaws.com/ai-tests/onboarding-full-outfit/new-pose-full-outfit-full-outfit-test-c69bc196/onboarding/08-body-pose_candidate_17.jpg?AWSAccessKeyId=AKIA3B5MDX6K7SIPJEOS&Signature=uM%2FVomCzXWCZD38GXEGlow%2FmGO8%3D&Expires=1779233354"
+    },
+    "top": {
+      "status": "success",
+      "output_s3_uri": "s3://decadriver-ai-assets-760033296277/ai-tests/onboarding-full-outfit/new-pose-full-outfit-full-outfit-test-c69bc196/outputs/02-top-applied.png"
+    },
+    "bottom": {
+      "status": "success",
+      "output_s3_uri": "s3://decadriver-ai-assets-760033296277/ai-tests/onboarding-full-outfit/new-pose-full-outfit-full-outfit-test-c69bc196/outputs/03-final-top-bottom.png"
+    }
+  }
+}

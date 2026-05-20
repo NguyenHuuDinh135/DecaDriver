@@ -13,23 +13,23 @@ export function CameraCapture({ onCapture }: CameraCaptureProps) {
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [capturedImg, setCapturedImg] = useState<string | null>(null);
 
-  // Mở camera
+  // Open camera
   const startCamera = async () => {
     try {
       const mediaStream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: "user" } // Mặc định mở camera trước
+        video: { facingMode: "user" } // Default to front camera
       });
       setStream(mediaStream);
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream;
       }
     } catch (err) {
-      console.error("Lỗi mở camera:", err);
-      alert("Không thể truy cập camera. Vui lòng kiểm tra quyền!");
+      console.error("Error opening camera:", err);
+      alert("Cannot access camera. Please check camera permissions!");
     }
   };
 
-  // Chụp ảnh
+  // Capture photo
   const takePhoto = useCallback(() => {
     if (!videoRef.current) return;
     const canvas = document.createElement("canvas");
@@ -41,7 +41,7 @@ export function CameraCapture({ onCapture }: CameraCaptureProps) {
       const imgUrl = canvas.toDataURL("image/jpeg");
       setCapturedImg(imgUrl);
       
-      // Chuyển DataURL thành File object để sau này gửi API
+      // Convert DataURL to File object for future API submission
       fetch(imgUrl)
         .then(res => res.blob())
         .then(blob => {
@@ -51,7 +51,7 @@ export function CameraCapture({ onCapture }: CameraCaptureProps) {
     }
   }, [onCapture]);
 
-  // Chụp lại
+  // Retake
   const retake = () => {
     setCapturedImg(null);
     onCapture(null);
@@ -61,7 +61,7 @@ export function CameraCapture({ onCapture }: CameraCaptureProps) {
     <div className="relative h-full w-full bg-zinc-900 flex flex-col items-center justify-center overflow-hidden">
       {!capturedImg ? (
         <>
-          {/* Màn hình Video */}
+          {/* Video Feed */}
           <video 
             ref={videoRef} 
             autoPlay 
@@ -69,11 +69,11 @@ export function CameraCapture({ onCapture }: CameraCaptureProps) {
             className="h-full w-full object-cover"
           />
           
-          {/* Nút điều khiển Camera */}
+          {/* Camera Controls */}
           <div className="absolute bottom-8 left-0 right-0 flex justify-center items-center space-x-6 z-10">
             {!stream ? (
               <Button onClick={startCamera} size="lg" className="rounded-full px-8">
-                Bật Camera
+                Turn on Camera
               </Button>
             ) : (
               <button 
@@ -85,12 +85,12 @@ export function CameraCapture({ onCapture }: CameraCaptureProps) {
         </>
       ) : (
         <>
-          {/* Màn hình Preview ảnh đã chụp */}
+          {/* Captured Image Preview */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={capturedImg} alt="Captured" className="h-full w-full object-cover" />
           <div className="absolute bottom-8 left-0 right-0 flex justify-center z-10">
             <Button variant="secondary" onClick={retake} className="rounded-full shadow-lg">
-              <RefreshCw className="mr-2 h-4 w-4" /> Chụp lại
+              <RefreshCw className="mr-2 h-4 w-4" /> Retake
             </Button>
           </div>
         </>

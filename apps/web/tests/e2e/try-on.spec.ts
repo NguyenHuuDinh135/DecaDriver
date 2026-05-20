@@ -41,7 +41,7 @@ const AUTH_STORAGE_VALUE = JSON.stringify({
 
 async function setupAuth(page: import("@playwright/test").Page) {
   // Navigate to an unprotected page so we can set storage before hitting protected routes
-  await page.goto("/login")
+  await page.goto("/")
 
   // Set localStorage so Zustand's persist middleware hydrates the auth store
   await page.evaluate((value) => {

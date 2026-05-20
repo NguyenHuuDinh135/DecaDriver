@@ -176,17 +176,17 @@ test.describe("Create post (/create/post)", () => {
   test("renders the post creation UI", async ({ page }) => {
     await page.goto("/create/post")
 
-    await expect(page.getByRole("heading", { name: /Đăng Look mới/i })).toBeVisible()
+    await expect(page.getByRole("heading", { name: /Post New Look/i })).toBeVisible()
     await expect(
-      page.getByPlaceholder(/Mô tả phong cách/i)
+      page.getByPlaceholder(/Describe your style/i)
     ).toBeVisible()
-    await expect(page.getByText(/Chạm để tải video\/ảnh lên/i)).toBeVisible()
+    await expect(page.getByText(/Tap to upload video\/photo/i)).toBeVisible()
   })
 
   test("post button is disabled when caption is empty", async ({ page }) => {
     await page.goto("/create/post")
 
-    const postButton = page.getByRole("button", { name: /Đăng/i })
+    const postButton = page.getByRole("button", { name: /Post/i })
     await expect(postButton).toBeDisabled()
   })
 
@@ -194,10 +194,10 @@ test.describe("Create post (/create/post)", () => {
     await page.goto("/create/post")
 
     await page
-      .getByPlaceholder(/Mô tả phong cách/i)
+      .getByPlaceholder(/Describe your style/i)
       .fill("My outfit today")
 
-    const postButton = page.getByRole("button", { name: /Đăng/i })
+    const postButton = page.getByRole("button", { name: /Post/i })
     await expect(postButton).toBeEnabled()
   })
 })

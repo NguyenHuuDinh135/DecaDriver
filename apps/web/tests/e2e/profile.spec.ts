@@ -2,11 +2,7 @@ import { test, expect } from "@playwright/test"
 
 test.describe("Profile & Settings", () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto("/login")
-    await page.getByLabel("Email").fill("test@example.com")
-    await page.getByLabel("Password").fill("password123")
-    await page.getByRole("button", { name: /sign in|log in/i }).click()
-    await page.waitForURL("**/feed")
+    await page.goto("/feed")
   })
 
   test("view profile page shows user info", async ({ page }) => {

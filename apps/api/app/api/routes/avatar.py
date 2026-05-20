@@ -1,7 +1,7 @@
 import uuid
 from typing import Any
 
-from fastapi import APIRouter, HTTPException, UploadFile, BackgroundTasks
+from fastapi import APIRouter, BackgroundTasks, HTTPException, UploadFile
 from sqlmodel import select
 
 from app.api.deps import CurrentUser, SessionDep
@@ -16,22 +16,27 @@ async def process_modal_avatar_training(
     user_id: uuid.UUID,
     image_uris: list[str],
     job_id: uuid.UUID,
-    session_factory: Any = None
 ):
     """Background task to trigger Modal training and update status."""
+    from sqlmodel import Session
+
     from app.core.db import engine
-    from sqlmodel import Session, select
-    
+
     try:
         # Convert S3 URIs to presigned URLs for Modal to download
         presigned_urls = [ai_client.generate_presigned_url(uri) for uri in image_uris]
-        
-        # Trigger training on Modal
+
+        output_s3_uri = f"s3://{settings.AI_S3_BUCKET}/avatars/{user_id}/reference_{job_id}.png"
+
+        # Trigger reference generation/training on Modal. For the current
+        # onboarding flow, Modal builds a clean full-body reference from the
+        # captured images and returns reference_image_url synchronously.
         result = await ai_client.invoke_modal_train(
             user_id=str(user_id),
-            image_urls=presigned_urls
+            image_urls=presigned_urls,
+            output_s3_uri=output_s3_uri,
         )
-        
+
         # Update DB with training result
         with Session(engine) as session:
             job = session.get(AvatarJob, job_id)
@@ -41,14 +46,11 @@ async def process_modal_avatar_training(
                 job.lora_s3_key = result.get("lora_s3_key")
                 session.add(job)
                 session.commit()
-                print(f"✅ Avatar training completed for {user_id}: {result}")
             elif job:
                 job.status = JobStatus.failed
                 session.add(job)
                 session.commit()
-                print(f"❌ Avatar training failed for {user_id}: {result}")
-    except Exception as e:
-        print(f"❌ Avatar training failed for {user_id}: {e}")
+    except Exception:
         with Session(engine) as session:
             job = session.get(AvatarJob, job_id)
             if job:
@@ -65,10 +67,10 @@ async def train_avatar(
     images: list[UploadFile],
     background_tasks: BackgroundTasks,
 ) -> Any:
-    if not settings.QWEN_API_URL:
+    if not settings.QWEN_API_URL and not settings.MODAL_TRAIN_URL:
         raise HTTPException(
             status_code=503,
-            detail="Avatar training is not available yet. Colab infrastructure is being set up.",
+            detail="Avatar training is not available yet. AI gateway is not configured.",
         )
     if not settings.AI_S3_BUCKET:
         raise HTTPException(status_code=503, detail="AI services not configured")
@@ -79,7 +81,7 @@ async def train_avatar(
     input_prefix = f"avatars/{current_user.id}/training/"
     image_uris = []
     reference_image_url = None
-    
+
     for i, img in enumerate(images):
         data = await img.read()
         s3_uri = ai_client.upload_bytes_to_s3(

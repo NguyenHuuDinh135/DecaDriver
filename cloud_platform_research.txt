@@ -1,0 +1,76 @@
+FREE TIER CLOUD PLATFORM RESEARCH - AI/ML STACK
+Date: May 19, 2026
+
+REQUIREMENTS:
+- Backend: FastAPI + PostgreSQL (pgvector)
+- Storage: S3-compatible (10GB+)
+- GPU: FASHN v1.5 (~6GB VRAM, 15-20s inference)
+- Backend: Stable 24/7
+- GPU workers: Can be unstable/on-demand
+
+PLATFORM ANALYSIS:
+
+1. RAILWAY - NO FREE TIER (removed Aug 2023)
+2. RENDER - Spins down after 15min (NOT suitable)
+3. FLY.IO - 256MB RAM free (too limited)
+4. SUPABASE - 0.5GB DB, pgvector YES, pauses after 1 week
+5. CLOUDFLARE R2 - 10GB, FREE egress (EXCELLENT)
+6. NEON - 0.5GB DB, pgvector YES, auto-suspend 5min (EXCELLENT)
+7. MODAL - $30 credits = 27-50 GPU hours/month (EXCELLENT)
+8. LIGHTNING.AI - 22 GPU hours/month (GOOD)
+9. KAGGLE - 120h/week but 12h sessions (HACKY)
+10. COLAB - Unreliable GPU access (NOT RECOMMENDED)
+
+COMPARISON TABLE:
+
+PostgreSQL (pgvector):
+- Neon: FREE, 0.5GB, auto-suspend (BEST)
+- Supabase: FREE, 0.5GB, pauses 1 week
+
+S3 Storage:
+- Cloudflare R2: FREE 10GB + unlimited egress (BEST)
+
+GPU Workers:
+- Modal: $30 credits = 27-50h (BEST)
+- Lightning.ai: 22h free (GOOD)
+- Kaggle: 120h/week hacky (POSSIBLE)
+
+Backend Hosting:
+- Fly.io free: 256MB too limited
+- Need paid: $5-10/month
+
+RECOMMENDED ARCHITECTURES:
+
+OPTION A - FULLY FREE (limited):
+- Backend: Fly.io free (256MB) - VERY LIMITED
+- Database: Neon free (pgvector)
+- Storage: Cloudflare R2 (10GB)
+- GPU: Modal ($30 credits)
+- Cost: $0/month, 27-50 GPU hours
+
+OPTION B - BEST VALUE ($5-10/month):
+- Backend: Fly.io paid (512MB, $5-7/month)
+- Database: Neon free (pgvector)
+- Storage: Cloudflare R2 (10GB free)
+- GPU: Modal ($30 free credits)
+- Cost: $5-10/month, 27-50 GPU hours
+
+FINAL RECOMMENDATIONS:
+
+BEST PostgreSQL: Neon (free, pgvector, auto-suspend OK)
+BEST S3: Cloudflare R2 (10GB + FREE egress)
+BEST GPU: Modal ($30 credits, serverless)
+BEST Backend: Fly.io paid ($5-7/month) or Railway ($5/month)
+
+KEY INSIGHTS:
+- R2 free egress saves $10-50/month vs AWS S3
+- Modal serverless perfect for pull-based workers
+- True 24/7 backend needs $5-10/month (free tiers inadequate)
+- Neon pgvector + auto-suspend ideal for low traffic
+
+GOTCHAS:
+- Render spins down (not 24/7)
+- Supabase pauses after 1 week
+- Neon cold start 1-2s (acceptable)
+- Modal GPU cold start 10-30s
+- Fly.io free 256MB too limited for FastAPI

@@ -10,13 +10,6 @@ for (const bp of BREAKPOINTS) {
   test.describe(`Visual regression @ ${bp.name} (${bp.width}px)`, () => {
     test.use({ viewport: { width: bp.width, height: bp.height } })
 
-    test("login page", async ({ page }) => {
-      await page.goto("/login")
-      await page.waitForLoadState("networkidle")
-      await expect(page).toHaveScreenshot(`login-${bp.name}.png`, {
-        fullPage: true,
-      })
-    })
 
     test("feed page (empty)", async ({ page }) => {
       await page.goto("/feed")

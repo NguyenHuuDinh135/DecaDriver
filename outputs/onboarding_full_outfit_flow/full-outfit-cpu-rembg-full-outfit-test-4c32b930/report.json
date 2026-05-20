@@ -1,0 +1,35 @@
+{
+  "run_id": "full-outfit-cpu-rembg",
+  "user_id": "full-outfit-test-4c32b930",
+  "flow": "onboarding -> reference -> top try-on -> bottom try-on -> one final outfit image",
+  "local_outputs": {
+    "final": "/home/dinh/DecaDriver/outputs/onboarding_full_outfit_flow/full-outfit-cpu-rembg-full-outfit-test-4c32b930/final_top_bottom_tryon.png",
+    "debug_reference": "/home/dinh/DecaDriver/outputs/onboarding_full_outfit_flow/full-outfit-cpu-rembg-full-outfit-test-4c32b930/debug_01_reference.png",
+    "debug_top_applied": "/home/dinh/DecaDriver/outputs/onboarding_full_outfit_flow/full-outfit-cpu-rembg-full-outfit-test-4c32b930/debug_02_top_applied.png"
+  },
+  "s3_outputs": {
+    "reference": "s3://decadriver-ai-assets-760033296277/ai-tests/onboarding-full-outfit/full-outfit-cpu-rembg-full-outfit-test-4c32b930/outputs/01-reference.png",
+    "top_intermediate": "s3://decadriver-ai-assets-760033296277/ai-tests/onboarding-full-outfit/full-outfit-cpu-rembg-full-outfit-test-4c32b930/outputs/02-top-applied.png",
+    "final": "s3://decadriver-ai-assets-760033296277/ai-tests/onboarding-full-outfit/full-outfit-cpu-rembg-full-outfit-test-4c32b930/outputs/03-final-top-bottom.png"
+  },
+  "assets": {
+    "top": "/home/dinh/DecaDriver/test_assets/top_shirt.jpg",
+    "bottom": "/home/dinh/DecaDriver/test_assets/bottom_jeans.jpg"
+  },
+  "modal_results": {
+    "train": {
+      "status": "success",
+      "reference_image_url": "s3://decadriver-ai-assets-760033296277/ai-tests/onboarding-full-outfit/full-outfit-cpu-rembg-full-outfit-test-4c32b930/outputs/01-reference.png",
+      "lora_s3_key": "avatars/full-outfit-test-4c32b930/reference-only",
+      "source_image_url": "https://decadriver-ai-assets-760033296277.s3.amazonaws.com/ai-tests/onboarding-full-outfit/full-outfit-cpu-rembg-full-outfit-test-4c32b930/onboarding/08-body-photo-1515886657613-9f3515b0c78f.jpg?AWSAccessKeyId=AKIA3B5MDX6K7SIPJEOS&Signature=V0l167QFCy9a6VtXAE0u0PWK4P4%3D&Expires=1779232518"
+    },
+    "top": {
+      "status": "success",
+      "output_s3_uri": "s3://decadriver-ai-assets-760033296277/ai-tests/onboarding-full-outfit/full-outfit-cpu-rembg-full-outfit-test-4c32b930/outputs/02-top-applied.png"
+    },
+    "bottom": {
+      "status": "success",
+      "output_s3_uri": "s3://decadriver-ai-assets-760033296277/ai-tests/onboarding-full-outfit/full-outfit-cpu-rembg-full-outfit-test-4c32b930/outputs/03-final-top-bottom.png"
+    }
+  }
+}

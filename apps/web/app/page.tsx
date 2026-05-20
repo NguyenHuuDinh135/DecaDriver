@@ -183,11 +183,8 @@ export default function LandingPage() {
             DecaDriver
           </span>
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="sm" asChild>
-              <Link href="/login">Sign In</Link>
-            </Button>
             <Button size="sm" asChild>
-              <Link href="/register">Get Started</Link>
+              <Link href="/feed">Open App</Link>
             </Button>
           </div>
         </div>
@@ -212,12 +209,12 @@ export default function LandingPage() {
             <Button
               size="lg"
               className="rounded-full px-8"
-              onClick={() =>
-                demoRef.current?.scrollIntoView({ behavior: "smooth" })
-              }
+              asChild
             >
-              <Sparkles className="mr-2 size-4" />
-              Try It Free
+              <Link href="/onboarding">
+                <Sparkles className="mr-2 size-4" />
+                Try It Free
+              </Link>
             </Button>
             <Button
               size="lg"

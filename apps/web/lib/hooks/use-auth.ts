@@ -16,7 +16,7 @@ export function useAuth() {
 
   const handleLogout = () => {
     logout()
-    router.push("/login")
+    router.push("/feed")
   }
 
   return {
@@ -29,16 +29,14 @@ export function useAuth() {
 }
 
 export function useCurrentUser() {
-  const { isAuthenticated, setUser } = useAuthStore()
+  const { user, isAuthenticated } = useAuthStore()
 
   return useQuery<User>({
     queryKey: ["currentUser"],
     queryFn: async () => {
-      const user = await api.get<User>("/users/me")
-      setUser(user)
-      return user
+      return user as User
     },
-    enabled: isAuthenticated,
+    enabled: isAuthenticated && !!user,
     staleTime: 5 * 60 * 1000,
   })
 }

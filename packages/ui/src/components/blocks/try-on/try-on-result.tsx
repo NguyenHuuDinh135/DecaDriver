@@ -7,7 +7,7 @@ import { useState, useEffect } from "react";
 export function TryOnResult() {
   const [status, setStatus] = useState<"processing" | "success">("processing");
 
-  // Giả lập thời gian AI xử lý (trong thực tế sẽ chờ API trả về)
+  // Simulate AI processing time (in reality it will wait for the API response)
   useEffect(() => {
     const timer = setTimeout(() => setStatus("success"), 3000);
     return () => clearTimeout(timer);
@@ -17,7 +17,7 @@ export function TryOnResult() {
     return (
       <div className="flex flex-col items-center justify-center h-full space-y-6 p-8 text-center">
         <div className="relative w-48 h-48">
-          {/* Hiệu ứng radar/scan AI */}
+          {/* AI Radar/Scan Effect */}
           <div className="absolute inset-0 border-4 border-primary/20 rounded-full animate-ping" />
           <div className="absolute inset-0 border-4 border-t-primary rounded-full animate-spin" />
           <div className="absolute inset-0 flex items-center justify-center">
@@ -25,9 +25,9 @@ export function TryOnResult() {
           </div>
         </div>
         <div className="space-y-2">
-          <h2 className="text-xl font-bold animate-pulse">Đang phối đồ bằng AI...</h2>
+          <h2 className="text-xl font-bold animate-pulse">Generating your AI outfit...</h2>
           <p className="text-sm text-muted-foreground">
-            Hệ thống đang phân tích vóc dáng và chất liệu vải để tạo ra hình ảnh tự nhiên nhất.
+            The system is analyzing body shape and fabric texture to generate the most natural image.
           </p>
         </div>
       </div>
@@ -36,7 +36,7 @@ export function TryOnResult() {
 
   return (
     <div className="flex flex-col h-full animate-in fade-in zoom-in duration-500">
-      {/* Ảnh kết quả */}
+      {/* Result Image */}
       <div className="relative flex-1 bg-zinc-100 dark:bg-zinc-900 rounded-3xl overflow-hidden shadow-inner">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img 
@@ -49,16 +49,16 @@ export function TryOnResult() {
         </div>
       </div>
 
-      {/* Hành động */}
+      {/* Actions */}
       <div className="p-6 grid grid-cols-2 gap-3">
         <Button variant="outline" className="rounded-full w-full">
-          <Share2 className="mr-2 h-4 w-4" /> Chia sẻ
+          <Share2 className="mr-2 h-4 w-4" /> Share
         </Button>
         <Button className="rounded-full w-full">
-          <Check className="mr-2 h-4 w-4" /> Lưu tủ đồ
+          <Check className="mr-2 h-4 w-4" /> Save to Closet
         </Button>
         <Button variant="ghost" className="col-span-2 text-muted-foreground" onClick={() => window.history.back()}>
-          <RefreshCw className="mr-2 h-4 w-4" /> Thử lại với ảnh khác
+          <RefreshCw className="mr-2 h-4 w-4" /> Try again with another photo
         </Button>
       </div>
     </div>

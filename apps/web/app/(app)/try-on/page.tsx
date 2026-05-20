@@ -1,12 +1,10 @@
 "use client"
 
-import { Suspense, useState, useEffect } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
-import { Sparkles, AlertCircle } from "lucide-react"
-import { GarmentPicker } from "@workspace/ui/components/blocks/try-on/garment-picker"
+import { Suspense, useState } from "react"
+import { useRouter } from "next/navigation"
+import { Sparkles, CheckCircle2 } from "lucide-react"
 import { Button } from "@workspace/ui/components/button"
-import { useGarments, useCreateTryOn } from "@/lib/hooks/use-tryon"
-import { useHasAvatar } from "@/lib/hooks/use-avatar"
+import { MOCK_GARMENTS, MOCK_LOOKS } from "@/lib/mock-data"
 
 export default function TryOnPage() {
   return (
@@ -18,41 +16,36 @@ export default function TryOnPage() {
 
 function TryOnContent() {
   const router = useRouter()
-  const searchParams = useSearchParams()
   const [selectedGarment, setSelectedGarment] = useState<string | null>(null)
-  const [page, setPage] = useState(0)
-  const limit = 20
+  const [isGenerating, setIsGenerating] = useState(false)
+  const [generatedResult, setGeneratedResult] = useState<string | null>(null)
 
-  useEffect(() => {
-    const garmentParam = searchParams.get("garment")
-    if (garmentParam) {
-      setSelectedGarment(garmentParam)
-    }
-  }, [searchParams])
-
-  const hasAvatar = useHasAvatar()
-  const { data: garmentsData, isLoading: isLoadingGarments } = useGarments(page, limit)
-  const createTryOn = useCreateTryOn()
-
-  const garments = garmentsData?.data ?? []
-  const totalCount = garmentsData?.count ?? 0
-  const hasMore = (page + 1) * limit < totalCount
-
-  const selectedGarmentData = garments.find((g) => g.id === selectedGarment)
+  const selectedGarmentData = MOCK_GARMENTS.find(
+    (g) => g.id === selectedGarment
+  )
 
   const handleGenerate = () => {
-    if (!selectedGarment || !hasAvatar) return
+    if (!selectedGarment) return
+    setIsGenerating(true)
+    setGeneratedResult(null)
 
-    createTryOn.mutate(selectedGarment, {
-      onSuccess: (job) => {
-        router.push(`/try-on/result?job=${job.id}`)
-      },
-    })
+    // Simulate AI generation delay
+    setTimeout(() => {
+      // Pick a random look result to show as the "generated" image
+      const look =
+        MOCK_LOOKS.find((l) => l.garment_id === selectedGarment) ??
+        MOCK_LOOKS[0]
+      if (look) {
+        setGeneratedResult(look.result_url)
+      }
+      setIsGenerating(false)
+    }, 2500)
   }
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 lg:px-8">
       <div className="grid gap-8 lg:grid-cols-2 lg:gap-12">
+        {/* Left: garment selection */}
         <section>
           <h1 className="font-serif text-3xl tracking-tight lg:text-4xl">
             Select a garment
@@ -61,43 +54,66 @@ function TryOnContent() {
             Choose a piece to virtually try on with your avatar
           </p>
 
-          <div className="mt-6">
-            <GarmentPicker
-              garments={garments}
-              selectedId={selectedGarment}
-              onSelect={setSelectedGarment}
-              isLoading={isLoadingGarments}
-            />
+          <div className="mt-6 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+            {MOCK_GARMENTS.map((item) => (
+              <button
+                key={item.id}
+                onClick={() => {
+                  setSelectedGarment(item.id)
+                  setGeneratedResult(null)
+                }}
+                className={`group relative flex flex-col overflow-hidden rounded-lg border-2 transition-all duration-200 ${
+                  selectedGarment === item.id
+                    ? "border-foreground ring-1 ring-foreground/20"
+                    : "border-transparent hover:border-muted-foreground/30"
+                }`}
+              >
+                <div className="aspect-[3/4] overflow-hidden bg-muted">
+                  <img
+                    src={item.image_url}
+                    alt={item.title}
+                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    loading="lazy"
+                  />
+                </div>
+                <div className="p-2 text-left">
+                  <p className="text-xs font-medium truncate">{item.title}</p>
+                  {item.brand && (
+                    <p className="text-[0.65rem] text-muted-foreground truncate">
+                      {item.brand}
+                    </p>
+                  )}
+                </div>
+                {selectedGarment === item.id && (
+                  <div className="absolute right-1.5 top-1.5 flex size-5 items-center justify-center rounded-full bg-foreground text-background">
+                    <CheckCircle2 className="size-3.5" />
+                  </div>
+                )}
+              </button>
+            ))}
           </div>
-
-          {totalCount > limit && (
-            <div className="mt-4 flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={page === 0}
-                onClick={() => setPage((p) => Math.max(0, p - 1))}
-              >
-                Previous
-              </Button>
-              <span className="text-xs text-muted-foreground">
-                Page {page + 1} of {Math.ceil(totalCount / limit)}
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={!hasMore}
-                onClick={() => setPage((p) => p + 1)}
-              >
-                Next
-              </Button>
-            </div>
-          )}
         </section>
 
+        {/* Right: preview + generate */}
         <section className="flex flex-col">
-          <div className="flex-1 flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-muted/30 p-8">
-            {selectedGarmentData ? (
+          <div className="flex-1 flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-muted/30 p-8 min-h-[400px]">
+            {generatedResult ? (
+              <div className="flex flex-col items-center gap-4 animate-in fade-in duration-500">
+                <div className="relative aspect-[3/4] w-48 overflow-hidden rounded-lg shadow-lg lg:w-64">
+                  <img
+                    src={generatedResult}
+                    alt="Try-on result"
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+                <div className="text-center">
+                  <p className="text-sm font-medium text-green-600 dark:text-green-400 flex items-center gap-1.5">
+                    <CheckCircle2 className="size-4" />
+                    Look generated successfully!
+                  </p>
+                </div>
+              </div>
+            ) : selectedGarmentData ? (
               <div className="flex flex-col items-center gap-4">
                 <div className="relative aspect-[3/4] w-48 overflow-hidden rounded-lg shadow-lg lg:w-64">
                   <img
@@ -126,29 +142,22 @@ function TryOnContent() {
           </div>
 
           <div className="mt-6 space-y-3">
-            {!hasAvatar && (
-              <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm dark:border-amber-900 dark:bg-amber-950">
-                <AlertCircle className="mt-0.5 size-4 shrink-0 text-amber-600" />
-                <p className="text-amber-800 dark:text-amber-200">
-                  You need a trained avatar to generate try-on images.{" "}
-                  <a
-                    href="/onboarding/avatar"
-                    className="font-medium underline underline-offset-2"
-                  >
-                    Create one now
-                  </a>
-                </p>
-              </div>
-            )}
-
             <Button
               onClick={handleGenerate}
-              disabled={!selectedGarment || !hasAvatar || createTryOn.isPending}
+              disabled={!selectedGarment || isGenerating}
               size="lg"
               className="w-full"
             >
-              {createTryOn.isPending ? (
-                "Submitting..."
+              {isGenerating ? (
+                <span className="flex items-center gap-2">
+                  <span className="size-4 animate-spin rounded-full border-2 border-background border-t-transparent" />
+                  Generating...
+                </span>
+              ) : generatedResult ? (
+                <>
+                  <Sparkles className="mr-2 size-4" />
+                  Try Another
+                </>
               ) : (
                 <>
                   <Sparkles className="mr-2 size-4" />
@@ -157,10 +166,26 @@ function TryOnContent() {
               )}
             </Button>
 
-            {createTryOn.isError && (
-              <p className="text-center text-sm text-destructive">
-                Failed to start try-on. Please try again.
-              </p>
+            {generatedResult && (
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => router.push("/wardrobe")}
+                >
+                  View in Wardrobe
+                </Button>
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => {
+                    setSelectedGarment(null)
+                    setGeneratedResult(null)
+                  }}
+                >
+                  Start Over
+                </Button>
+              </div>
             )}
           </div>
         </section>

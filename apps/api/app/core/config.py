@@ -122,6 +122,7 @@ class Settings(BaseSettings):
     CATVTON_API_URL: str = ""
 
     # Modal AI Endpoints (Consolidated Cloud AI)
+    MODAL_FASHN_URL: str = ""
     MODAL_CLIP_URL: str = ""
     MODAL_ANALYZE_URL: str = ""
     MODAL_TRAIN_URL: str = ""

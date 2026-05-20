@@ -114,13 +114,13 @@ export default function AffiliateDashboardPage() {
         />
         <StatCard 
           title="Revenue" 
-          value={`${(stats?.total_revenue ?? 0).toLocaleString()}đ`} 
+          value={`${(stats?.total_revenue ?? 0).toLocaleString()} VND`} 
           icon={BarChart3}
           color="purple"
         />
         <StatCard 
           title="Commission" 
-          value={`${(stats?.total_commission ?? 0).toLocaleString()}đ`} 
+          value={`${(stats?.total_commission ?? 0).toLocaleString()} VND`} 
           icon={DollarSign}
           color="orange"
         />

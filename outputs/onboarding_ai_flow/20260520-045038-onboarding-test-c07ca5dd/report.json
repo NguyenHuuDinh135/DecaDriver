@@ -1,0 +1,40 @@
+{
+  "run_id": "20260520-045038",
+  "user_id": "onboarding-test-c07ca5dd",
+  "flow": "6 selfies + 2 body photos -> Modal train/reference -> Modal FASHN try-on",
+  "local_outputs": {
+    "reference": "/home/dinh/DecaDriver/outputs/onboarding_ai_flow/20260520-045038-onboarding-test-c07ca5dd/01_reference_from_onboarding.png",
+    "tryon": "/home/dinh/DecaDriver/outputs/onboarding_ai_flow/20260520-045038-onboarding-test-c07ca5dd/02_tryon_result.png"
+  },
+  "s3_outputs": {
+    "reference_image_url": "s3://decadriver-ai-assets-760033296277/ai-tests/onboarding-flow/20260520-045038-onboarding-test-c07ca5dd/outputs/reference.png",
+    "tryon_output_s3_uri": "s3://decadriver-ai-assets-760033296277/ai-tests/onboarding-flow/20260520-045038-onboarding-test-c07ca5dd/outputs/tryon.png"
+  },
+  "assets": {
+    "selfies": [
+      "/home/dinh/DecaDriver/test_assets/face_1.jpg",
+      "/home/dinh/DecaDriver/test_assets/face_2.jpg",
+      "/home/dinh/DecaDriver/test_assets/face_3.jpg",
+      "/home/dinh/DecaDriver/test_assets/face_4.jpg",
+      "/home/dinh/DecaDriver/test_assets/face_5.jpg",
+      "/home/dinh/DecaDriver/test_assets/person_base.jpg"
+    ],
+    "body_photos": [
+      "/home/dinh/DecaDriver/test_assets/person_base.jpg",
+      "/home/dinh/DecaDriver/photo-1515886657613-9f3515b0c78f.jpg"
+    ],
+    "garment": "/home/dinh/DecaDriver/test_assets/top_shirt.jpg"
+  },
+  "modal_results": {
+    "train": {
+      "status": "success",
+      "reference_image_url": "s3://decadriver-ai-assets-760033296277/ai-tests/onboarding-flow/20260520-045038-onboarding-test-c07ca5dd/outputs/reference.png",
+      "lora_s3_key": "avatars/onboarding-test-c07ca5dd/reference-only",
+      "source_image_url": "https://decadriver-ai-assets-760033296277.s3.amazonaws.com/ai-tests/onboarding-flow/20260520-045038-onboarding-test-c07ca5dd/onboarding/08-body-photo-1515886657613-9f3515b0c78f.jpg?AWSAccessKeyId=AKIA3B5MDX6K7SIPJEOS&Signature=c7vzvifFUEsNme4VLuyhwiXpBfs%3D&Expires=1779231045"
+    },
+    "tryon": {
+      "status": "success",
+      "output_s3_uri": "s3://decadriver-ai-assets-760033296277/ai-tests/onboarding-flow/20260520-045038-onboarding-test-c07ca5dd/outputs/tryon.png"
+    }
+  }
+}
